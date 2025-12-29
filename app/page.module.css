@@ -1,58 +1,57 @@
+/* Remove centering and make full width */
 .page {
   --background: #fafafa;
   --foreground: #fff;
-
   --text-primary: #000;
   --text-secondary: #666;
-
   --button-primary-hover: #383838;
   --button-secondary-hover: #f2f2f2;
   --button-secondary-border: #ebebeb;
 
-  display: flex;
   min-height: 100vh;
-  align-items: center;
-  justify-content: center;
   font-family: var(--font-geist-sans);
   background-color: var(--background);
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
+/* Main container - remove centering and max-width */
 .main {
-  display: flex;
   min-height: 100vh;
   width: 100%;
-  max-width: 800px;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
+  margin: 0;
+  padding: 0;
   background-color: var(--foreground);
-  padding: 120px 60px;
 }
 
+/* Intro section adjustments */
 .intro {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
   gap: 24px;
+  width: 100%;
+  padding: 60px;
 }
 
 .intro h1 {
-  max-width: 320px;
   font-size: 40px;
   font-weight: 600;
   line-height: 48px;
   letter-spacing: -2.4px;
-  text-wrap: balance;
   color: var(--text-primary);
+  width: 100%;
+  max-width: none;
 }
 
 .intro p {
-  max-width: 440px;
   font-size: 18px;
   line-height: 32px;
-  text-wrap: balance;
   color: var(--text-secondary);
+  width: 100%;
+  max-width: none;
 }
 
 .intro a {
@@ -60,13 +59,14 @@
   color: var(--text-primary);
 }
 
+/* CTAs section */
 .ctas {
   display: flex;
   flex-direction: row;
   width: 100%;
-  max-width: 440px;
   gap: 16px;
   font-size: 14px;
+  flex-wrap: wrap;
 }
 
 .ctas a {
@@ -106,34 +106,61 @@ a.secondary {
   }
 }
 
-@media (max-width: 600px) {
-  .main {
-    padding: 48px 24px;
-  }
-
+/* Responsive adjustments */
+@media (max-width: 768px) {
   .intro {
-    gap: 16px;
+    padding: 40px 24px;
+    gap: 20px;
   }
 
   .intro h1 {
     font-size: 32px;
     line-height: 40px;
-    letter-spacing: -1.92px;
+    letter-spacing: -1.6px;
+  }
+
+  .intro p {
+    font-size: 16px;
+    line-height: 28px;
+  }
+
+  .ctas {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ctas a {
+    width: 100%;
+    max-width: 100%;
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .logo {
-    filter: invert();
+@media (max-width: 480px) {
+  .intro {
+    padding: 32px 20px;
+    gap: 16px;
   }
 
+  .intro h1 {
+    font-size: 28px;
+    line-height: 36px;
+    letter-spacing: -1.2px;
+  }
+
+  .intro p {
+    font-size: 15px;
+    line-height: 26px;
+  }
+}
+
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
   .page {
     --background: #000;
-    --foreground: #000;
-
+    --foreground: #0a0a0a;
     --text-primary: #ededed;
     --text-secondary: #999;
-
     --button-primary-hover: #ccc;
     --button-secondary-hover: #1a1a1a;
     --button-secondary-border: #1a1a1a;
