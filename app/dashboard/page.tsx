@@ -8,7 +8,8 @@ import ActionButtons from "./components/ActionButtons";
 import RecentActivity from "./components/RecentActivity";
 import DonerForm from "../Doner/DonerForms";
 import ExpenseForm from "../spent/spent-form";
-import LoanForm from "../loan/loan-form";
+import LoanForm from "../spent/spent-form";
+import ViewDonors from "../Donerlist/view_doner";
 
 // Import the other components with fallbacks
 import { getDashboardStats } from "./utils/calculations";
@@ -331,65 +332,109 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Loan Form - Show notification if not available */}
       {showLoanForm && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 9999,
+      padding: "1rem",
+    }}
+  >
+    <div
+      style={{
+        background: "white",
+        borderRadius: "16px",
+        maxWidth: "900px",
+        width: "100%",
+        height: "90vh",              // Better: use height instead of maxHeight
+        maxHeight: "90vh",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+        boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+      }}
+    >
+      {/* Modal Header - stays fixed at top */}
+      <div
+        style={{
           display: "flex",
+          justifyContent: "space-between",
           alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9999,
-          padding: "1rem",
-        }}>
-          <div style={{
-            background: "white",
-            borderRadius: "12px",
-            padding: "2rem",
-            maxWidth: "500px",
-            width: "100%",
-          }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{
-                width: "60px",
-                height: "60px",
-                borderRadius: "50%",
-                background: "#20c997",
-                color: "white",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "1.5rem",
-                margin: "0 auto 1rem",
-              }}>
-                ⚠️
-              </div>
-              <h2 style={{ marginBottom: "1rem" }}>Loan Form</h2>
-              <p style={{ marginBottom: "1.5rem", color: "#666" }}>
-                The Loan Form component is not implemented yet.
-              </p>
-              <button 
-                onClick={() => setShowLoanForm(false)}
-                style={{
-                  padding: "0.75rem 2rem",
-                  background: "#20c997",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "1rem",
-                  cursor: "pointer",
-                }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
+          padding: "1.5rem 2rem",
+          background: "linear-gradient(135deg, #ff922b, #fd7e14)",
+          color: "white",
+          flexShrink: 0, // Important: prevents header from shrinking
+        }}
+      >
+        <div>
+          <h2
+            style={{
+              fontSize: "1.8rem",
+              fontWeight: "700",
+              margin: "0 0 0.25rem 0",
+              letterSpacing: "0.5px",
+            }}
+          >
+            ADD LOAN RECORD
+          </h2>
+          <p
+            style={{
+              opacity: "0.9",
+              margin: "0",
+              fontSize: "0.95rem",
+            }}
+          >
+            Record all loan details with complete information
+          </p>
         </div>
-      )}
+        <button
+          onClick={() => setShowLoanForm(false)}
+          style={{
+            background: "rgba(255, 255, 255, 0.2)",
+            border: "none",
+            width: "40px",
+            height: "40px",
+            borderRadius: "10px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.5rem",
+            cursor: "pointer",
+            color: "white",
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.3)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+          }}
+        >
+          ×
+        </button>
+      </div>
+
+      {/* Scrollable Form Area - This is the key fix */}
+      <div
+        style={{
+          flex: 1,                    // Takes all remaining space
+          overflowY: "auto",          // Enables scrolling when content is long
+          padding: "2rem",            // Good padding inside form
+        }}
+      >
+        <LoanForm />
+      </div>
+    </div>
+  </div>
+)}
 
       {/* View Donors - Show notification if not available */}
       {showViewDonors && (
@@ -447,6 +492,7 @@ export default function DashboardPage() {
                 Close
               </button>
             </div>
+            <ViewDonors/>
           </div>
         </div>
       )}

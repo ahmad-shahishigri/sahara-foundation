@@ -6,7 +6,7 @@ export default function Home() {
       {/* Landing Page Section */}
       <main style={mainStyle}>
         <div style={introStyle}>
-          <h1 style={h1Style}>Sahara  Welfare Foundation</h1>
+          <h1 style={h1Style}>Sahara  Welfare Foundation Dashboard</h1>
           <p style={pStyle}>
             Welcome to the Sahara Welfare Foundation Management System. 
             Track donations, manage loans, and monitor expenses in real-time.

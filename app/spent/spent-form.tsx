@@ -180,29 +180,123 @@ export default function ExpenseForm() {
 
         <form onSubmit={handleSubmit} className={styles.form}>
           {/* Type Selection */}
-          <div className={styles.typeSelector}>
-            <div className={styles.typeOptions}>
-              <button
-                type="button"
-                className={`${styles.typeButton} ${expenseType === "expense" ? styles.active : ""}`}
-                onClick={() => setExpenseType("expense")}
-              >
-                <span className={styles.typeIcon}>💰</span>
-                EXPENSE RECORD
-              </button>
-              <button
-                type="button"
-                className={`${styles.typeButton} ${expenseType === "loan" ? styles.active : ""}`}
-                onClick={() => setExpenseType("loan")}
-              >
-                <span className={styles.typeIcon}>📝</span>
-                LOAN RECORD
-              </button>
-            </div>
-            <div className={styles.typeIndicator}>
-              Currently recording: <strong>{expenseType === "loan" ? "LOAN" : "EXPENSE"}</strong>
-            </div>
-          </div>
+<div
+  style={{
+    background: "#f8f9fa",
+    borderRadius: "16px",
+    padding: "2rem",
+    marginBottom: "2rem",
+    border: "1px solid #e9ecef",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
+  }}
+>
+  <div
+    style={{
+      display: "flex",
+      gap: "1.5rem",
+      flexWrap: "wrap",
+      justifyContent: "center",
+      marginBottom: "1.5rem",
+    }}
+  >
+    {/* EXPENSE BUTTON */}
+    <button
+      type="button"
+      onClick={() => setExpenseType("expense")}
+      style={{
+        flex: "1",
+        minWidth: "100px",
+        padding: "1.5rem 2rem",
+        background: expenseType === "expense" ? "linear-gradient(135deg, #ff922b, #fd7e14)" : "white",
+        color: expenseType === "expense" ? "white" : "#333",
+        border: `2px solid ${expenseType === "expense" ? "#ff922b" : "#e9ecef"}`,
+        borderRadius: "14px",
+        fontSize: "1.2rem",
+        fontWeight: "600",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "1rem",
+        transition: "all 0.3s ease",
+        boxShadow: expenseType === "expense" ? "0 8px 20px rgba(255, 146, 43, 0.3)" : "0 4px 10px rgba(0, 0, 0, 0.05)",
+      }}
+      onMouseEnter={(e) => {
+        if (expenseType !== "expense") {
+          e.currentTarget.style.borderColor = "#ff922b";
+          e.currentTarget.style.transform = "translateY(-4px)";
+          e.currentTarget.style.boxShadow = "0 12px 24px rgba(255, 146, 43, 0.2)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (expenseType !== "expense") {
+          e.currentTarget.style.borderColor = "#e9ecef";
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.05)";
+        }
+      }}
+    >
+      <span style={{ fontSize: "2.2rem" }}>💰</span>
+      EXPENSE RECORD
+    </button>
+
+    {/* LOAN BUTTON */}
+    <button
+      type="button"
+      onClick={() => setExpenseType("loan")}
+      style={{
+        flex: "1",
+        minWidth: "100px",
+        padding: "1.5rem 2rem",
+        background: expenseType === "loan" ? "linear-gradient(135deg, #ff922b, #fd7e14)" : "white",
+        color: expenseType === "loan" ? "white" : "#333",
+        border: `2px solid ${expenseType === "loan" ? "#ff922b" : "#e9ecef"}`,
+        borderRadius: "14px",
+        fontSize: "1.2rem",
+        fontWeight: "600",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "1rem",
+        transition: "all 0.3s ease",
+        boxShadow: expenseType === "loan" ? "0 8px 20px rgba(255, 146, 43, 0.3)" : "0 4px 10px rgba(0, 0, 0, 0.05)",
+      }}
+      onMouseEnter={(e) => {
+        if (expenseType !== "loan") {
+          e.currentTarget.style.borderColor = "#ff922b";
+          e.currentTarget.style.transform = "translateY(-4px)";
+          e.currentTarget.style.boxShadow = "0 12px 24px rgba(255, 146, 43, 0.2)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (expenseType !== "loan") {
+          e.currentTarget.style.borderColor = "#e9ecef";
+          e.currentTarget.style.transform = "translateY(0)";
+          e.currentTarget.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.05)";
+        }
+      }}
+    >
+      <span style={{ fontSize: "2.2rem" }}>📝</span>
+      LOAN RECORD
+    </button>
+  </div>
+
+  {/* Indicator Text */}
+  <div
+    style={{
+      textAlign: "center",
+      fontSize: "1.1rem",
+      color: "#555",
+      fontWeight: "500",
+    }}
+  >
+    Currently recording:{" "}
+    <strong style={{ color: "#ff922b", textTransform: "uppercase" }}>
+      {expenseType === "loan" ? "LOAN" : "EXPENSE"}
+    </strong>
+  </div>
+</div>
 
           {/* Form Grid - Common Fields */}
           <div className={styles.formGrid}>
