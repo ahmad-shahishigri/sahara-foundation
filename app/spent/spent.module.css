@@ -45,7 +45,7 @@ html, body {
   font-size: 1.8rem;
   font-weight: 700;
   margin: 0 0 0.25rem 0;
-  letterSpacing: 0.5px;
+  letter-spacing: 0.5px;
 }
 
 .modalHeader p {
@@ -133,6 +133,206 @@ html, body {
   opacity: 0.9;
 }
 
+/* ================= SUCCESS/ERROR MODAL STYLES ================= */
+.modal {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  animation: modalSlideIn 0.4s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalIcon {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+.modalIcon.success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.modalIcon.loanSuccess {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.modalIcon.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.modalTitle {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 1rem 0;
+  color: #333;
+  letter-spacing: 0.5px;
+}
+
+.modalMessage {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 1.5rem 0 2rem 0;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+.modalButton {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.modalButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.loanModalButton {
+  background: linear-gradient(135deg, #ff922b, #fd7e14);
+}
+
+.loanModalButton:hover {
+  box-shadow: 0 8px 20px rgba(255, 146, 43, 0.4);
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.form {
+  padding: 2rem;
+}
+
+.fieldGroup {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.labelIcon {
+  margin-right: 0.5rem;
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  border-color: #667eea;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 10px;
+  border: none;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+  margin-top: 1.5rem;
+}
+
+.submitButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.expenseButton {
+  background: linear-gradient(135deg, #ff922b, #fd7e14);
+}
+
+.expenseButton:hover:not(:disabled) {
+  box-shadow: 0 8px 20px rgba(255, 146, 43, 0.4);
+}
+
+.loanButton {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* ================= MOBILE FIX ================= */
 @media (max-width: 768px) {
   .formGrid {
@@ -152,5 +352,23 @@ html, body {
 
   .modalBody {
     padding: 1.5rem;
+  }
+
+  .modal {
+    padding: 2rem 1.5rem;
+    margin: 0 1rem;
+  }
+
+  .modalTitle {
+    font-size: 1.5rem;
+  }
+
+  .modalMessage {
+    font-size: 1rem;
+  }
+
+  .modalButton {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.95rem;
   }
 }

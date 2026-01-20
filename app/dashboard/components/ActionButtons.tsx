@@ -145,78 +145,80 @@ export default function ActionButtons({
   // Common styles for all buttons
   const actionCardStyle = {
     background: "white",
-    borderRadius: "10px",
-    padding: "1.5rem",
+    borderRadius: "14px",
+    padding: "1.8rem",
     display: "flex",
     flexDirection: "column" as const,
     alignItems: "center",
     textAlign: "center" as const,
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-    border: "1px solid #e9ecef",
-    transition: "all 0.2s ease",
+    boxShadow: "0 6px 16px rgba(0, 0, 0, 0.08)",
+    border: "2px solid #e9ecef",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     cursor: "pointer",
     width: "100%",
   };
 
   const actionIconStyle = (color1: string, color2: string) => ({
-    width: "60px",
-    height: "60px",
-    borderRadius: "12px",
+    width: "70px",
+    height: "70px",
+    borderRadius: "14px",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: "1rem",
-    fontSize: "1.5rem",
+    marginBottom: "1.2rem",
+    fontSize: "2rem",
     color: "white",
     background: `linear-gradient(135deg, ${color1}, ${color2})`,
+    boxShadow: `0 4px 12px ${color1}40`,
   });
 
   const styles = {
     actionsContainer: {
-      margin: "2rem 0",
-      padding: "1.5rem",
+      margin: "2.5rem 0",
+      padding: "2rem",
       background: "white",
-      borderRadius: "12px",
-      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
+      borderRadius: "16px",
+      boxShadow: "0 8px 24px rgba(0, 0, 0, 0.08)",
       border: "1px solid #e9ecef",
     },
     sectionTitle: {
-      fontSize: "1.5rem",
-      fontWeight: "600",
-      color: "#2d3748",
-      marginBottom: "1.5rem",
+      fontSize: "1.6rem",
+      fontWeight: "700",
+      color: "#1f2937",
+      marginBottom: "2rem",
       display: "flex",
       alignItems: "center",
       gap: "0.75rem",
+      letterSpacing: "-0.3px",
     },
     actionsGrid: {
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-      gap: "1.25rem",
+      gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+      gap: "1.8rem",
     },
     actionTitle: {
-      fontSize: "1.1rem",
-      fontWeight: "600",
-      color: "#2d3748",
+      fontSize: "1.15rem",
+      fontWeight: "700",
+      color: "#1f2937",
       marginBottom: "0.5rem",
     },
     actionDesc: {
-      fontSize: "0.875rem",
-      color: "#718096",
+      fontSize: "0.85rem",
+      color: "#6b7280",
       lineHeight: "1.4",
     },
   };
 
   // Hover handler for all cards
   const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>, color: string) => {
-    e.currentTarget.style.transform = "translateY(-2px)";
-    e.currentTarget.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.1)";
+    e.currentTarget.style.transform = "translateY(-8px)";
+    e.currentTarget.style.boxShadow = `0 12px 32px ${color}30`;
     e.currentTarget.style.borderColor = color;
   };
 
   const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
     e.currentTarget.style.transform = "translateY(0)";
-    e.currentTarget.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.05)";
+    e.currentTarget.style.boxShadow = "0 6px 16px rgba(0, 0, 0, 0.08)";
     e.currentTarget.style.borderColor = "#e9ecef";
   };
 
@@ -236,7 +238,7 @@ export default function ActionButtons({
           onMouseLeave={handleMouseLeave}
         >
           <div style={actionIconStyle("#4c6ef5", "#3b5bdb")}>
-            <i className="fas fa-user-plus"></i>
+            👥
           </div>
           <h3 style={styles.actionTitle}>Add Donor</h3>
           <p style={styles.actionDesc}>Register new contributors</p>
@@ -250,7 +252,7 @@ export default function ActionButtons({
           onMouseLeave={handleMouseLeave}
         >
           <div style={actionIconStyle("#20c997", "#12b886")}>
-            <i className="fas fa-file-invoice-dollar"></i>
+            💰
           </div>
           <h3 style={styles.actionTitle}>Add Expense</h3>
           <p style={styles.actionDesc}>Record foundation spending</p>
@@ -264,7 +266,7 @@ export default function ActionButtons({
           onMouseLeave={handleMouseLeave}
         >
           <div style={actionIconStyle("#ff922b", "#fd7e14")}>
-            <i className="fas fa-hand-holding-usd"></i>
+            📝
           </div>
           <h3 style={styles.actionTitle}>Add Loan</h3>
           <p style={styles.actionDesc}>Disburse new loan</p>
@@ -278,7 +280,7 @@ export default function ActionButtons({
           onMouseLeave={handleMouseLeave}
         >
           <div style={actionIconStyle("#9775fa", "#845ef7")}>
-            <i className="fas fa-users"></i>
+            📋
           </div>
           <h3 style={styles.actionTitle}>View Donors</h3>
           <p style={styles.actionDesc}>See all contributors</p>
@@ -292,7 +294,7 @@ export default function ActionButtons({
           onMouseLeave={handleMouseLeave}
         >
           <div style={actionIconStyle("#51cf66", "#40c057")}>
-            <i className="fas fa-file-alt"></i>
+            📊
           </div>
           <h3 style={styles.actionTitle}>Loan Records</h3>
           <p style={styles.actionDesc}>Track loans & expenses</p>

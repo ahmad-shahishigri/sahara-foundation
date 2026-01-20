@@ -92,15 +92,18 @@ export default function DonerForm({ onClose, onSuccess }: DonerFormProps) {
 
     // Main container
     container: {
+      height: "90vh",
       maxHeight: "90vh",
-      overflowY: "auto" as const,
+      display: "flex",
+      flexDirection: "column" as const,
       background: "white",
-      borderRadius: "12px",
+      borderRadius: "16px",
       boxShadow: "0 25px 50px rgba(0, 0, 0, 0.25)",
       width: "100%",
       maxWidth: "900px",
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       animation: "modalSlideIn 0.3s ease-out",
+      overflow: "hidden",
     },
     
     // Form Header with Close Button
@@ -114,13 +117,14 @@ export default function DonerForm({ onClose, onSuccess }: DonerFormProps) {
       position: "sticky" as const,
       top: 0,
       zIndex: 10,
+      flexShrink: 0,
     },
     headerContent: {
       flex: 1,
     },
     formTitle: {
-      fontSize: "1.5rem",
-      fontWeight: "600",
+      fontSize: "1.6rem",
+      fontWeight: "700",
       marginBottom: "0.25rem",
     },
     formSubtitle: {
@@ -141,6 +145,7 @@ export default function DonerForm({ onClose, onSuccess }: DonerFormProps) {
       fontSize: "1.5rem",
       transition: "all 0.2s ease",
       marginLeft: "1rem",
+      flexShrink: 0,
     },
     closeButtonHover: {
       background: "rgba(255, 255, 255, 0.3)",
@@ -148,6 +153,8 @@ export default function DonerForm({ onClose, onSuccess }: DonerFormProps) {
 
     formBody: {
       padding: "2rem",
+      flex: 1,
+      overflowY: "auto" as const,
     },
 
     // Form Grid

@@ -271,13 +271,14 @@ export default function ViewDoner() {
     },
     card: {
       background: "white",
-      borderRadius: "15px",
+      borderRadius: "16px",
       boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
       overflow: "hidden",
+      border: "1px solid rgba(229, 231, 235, 0.8)",
     },
     searchSection: {
-      background: "linear-gradient(90deg, #3498db 0%, #2980b9 100%)",
-      padding: "1.5rem 2rem",
+      background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+      padding: "2rem",
     },
     searchContainer: {
       maxWidth: "600px",
@@ -365,36 +366,41 @@ export default function ViewDoner() {
     },
     tableContainer: {
       overflowX: "auto" as const,
+      borderRadius: "12px",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
     },
     table: {
       width: "100%",
       borderCollapse: "collapse" as const,
     },
     tableHeader: {
-      background: "#f8f9fa",
+      background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
       borderBottom: "2px solid #dee2e6",
     },
     tableHeaderCell: {
-      padding: "1rem",
+      padding: "1.2rem",
       textAlign: "left" as const,
-      fontWeight: "600",
-      color: "#495057",
+      fontWeight: "700",
+      color: "white",
       fontSize: "0.9rem",
       textTransform: "uppercase" as const,
       letterSpacing: "0.5px",
     },
+
     tableRow: {
-      borderBottom: "1px solid #dee2e6",
-      transition: "all 0.2s ease",
+      borderBottom: "1px solid #e9ecef",
+      transition: "all 0.3s ease",
     },
     tableRowHover: {
       background: "#f8f9fa",
       cursor: "pointer",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
     },
     tableCell: {
-      padding: "1rem",
+      padding: "1.2rem 1rem",
       color: "#495057",
       fontSize: "0.95rem",
+      verticalAlign: "middle" as const,
     },
     amountCell: {
       fontWeight: "600",
@@ -762,19 +768,19 @@ export default function ViewDoner() {
                             <button
                               onClick={() => handleMobileSelect(group.mobile_no)}
                               style={{
-                                padding: "0.5rem 1rem",
-                                background: "linear-gradient(90deg, #3498db 0%, #2980b9 100%)",
+                                padding: "0.6rem 1.2rem",
+                                background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
                                 color: "white",
                                 border: "none",
-                                borderRadius: "6px",
+                                borderRadius: "8px",
                                 fontSize: "0.85rem",
                                 fontWeight: "600",
                                 cursor: "pointer",
                                 transition: "all 0.3s ease",
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = "translateY(-2px)";
-                                e.currentTarget.style.boxShadow = "0 4px 6px rgba(52, 152, 219, 0.3)";
+                                e.currentTarget.style.transform = "translateY(-3px)";
+                                e.currentTarget.style.boxShadow = "0 6px 12px rgba(102, 126, 234, 0.4)";
                               }}
                               onMouseLeave={(e) => {
                                 e.currentTarget.style.transform = "translateY(0)";

@@ -24,11 +24,18 @@ type ExpenseRecordType = {
   collateral?: string;
 };
 
-export default function ExpenseForm() {
+type ExpenseFormProps = {
+  onClose?: () => void;
+  onSuccess?: () => void;
+  expenseType?: "loan" | "expense";
+  hideHeader?: boolean;
+};
+
+export default function ExpenseForm({ onClose, onSuccess, expenseType: initialType, hideHeader = false }: ExpenseFormProps = {}) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [expenseType, setExpenseType] = useState<"loan" | "expense">("expense");
+  const [expenseType, setExpenseType] = useState<"loan" | "expense">(initialType || "expense");
 
   const categories = [
     "Food & Ration",
@@ -122,6 +129,15 @@ export default function ExpenseForm() {
             : "Expense record has been successfully added!"
         );
         // e.currentTarget.reset();
+        
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          // Close modal after 2 seconds
+          setTimeout(() => {
+            if (onClose) onClose();
+            onSuccess();
+          }, 2000);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -152,7 +168,8 @@ export default function ExpenseForm() {
       `}</style>
 
       <div className={styles.formContainer}>
-        {/* Form Header */}
+        {/* Form Header - only show if hideHeader is false */}
+        {!hideHeader && (
         <div style={{ 
           textAlign: "center", 
           padding: "1.5rem 2rem",
@@ -177,6 +194,7 @@ export default function ExpenseForm() {
             Record all loans and expenses with complete details
           </p>
         </div>
+        )}
 
         <form onSubmit={handleSubmit} className={styles.form}>
           {/* Type Selection */}
