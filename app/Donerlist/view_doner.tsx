@@ -39,7 +39,12 @@ type DonationRecord = {
   mobile_no: string;
 };
 
-export default function ViewDoner() {
+interface ViewDonerProps {
+  isModal?: boolean;
+  onClose?: () => void;
+}
+
+export default function ViewDoner({ isModal = false, onClose }: ViewDonerProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [doners, setDoners] = useState<DonerType[]>([]);
   const [filteredDoners, setFilteredDoners] = useState<DonerType[]>([]);
@@ -240,13 +245,25 @@ export default function ViewDoner() {
     ? Array.from(new Set(allDonations.filter(d => d.is_main_record).map(d => d.doner_name)))
     : [];
 
-  // Inline styles
+  // Inline styles with professional color scheme
+  const colors = {
+    primary: "#4c6ef5",
+    primaryDark: "#3b5bdb",
+    secondary: "#20c997",
+    accent: "#ffa94d",
+    error: "#fa5252",
+    success: "#20c997",
+    text: "#2d3748",
+    lightBg: "#f8f9fa",
+    border: "#e9ecef",
+  };
+
   const styles = {
     container: {
       minHeight: "100vh",
       background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
       padding: "2rem 1rem",
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     },
     wrapper: {
       maxWidth: "1200px",
@@ -277,7 +294,7 @@ export default function ViewDoner() {
       border: "1px solid rgba(229, 231, 235, 0.8)",
     },
     searchSection: {
-      background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+      background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
       padding: "2rem",
     },
     searchContainer: {
@@ -333,16 +350,16 @@ export default function ViewDoner() {
       gap: "0.5rem",
     },
     viewButtonActive: {
-      background: "linear-gradient(90deg, #2ecc71 0%, #27ae60 100%)",
+      background: `linear-gradient(135deg, ${colors.secondary} 0%, #16a34a 100%)`,
       color: "white",
-      boxShadow: "0 4px 6px rgba(46, 204, 113, 0.3)",
+      boxShadow: `0 4px 6px ${colors.secondary}40`,
     },
     viewButtonInactive: {
-      background: "#f8f9fa",
+      background: colors.lightBg,
       color: "#6c757d",
     },
     backButton: {
-      background: "#95a5a6",
+      background: colors.primary,
       color: "white",
       padding: "0.75rem 1.5rem",
       borderRadius: "8px",
@@ -357,7 +374,7 @@ export default function ViewDoner() {
       marginBottom: "1.5rem",
     },
     backButtonHover: {
-      background: "#7f8c8d",
+      background: colors.primaryDark,
     },
     loadingContainer: {
       textAlign: "center" as const,
@@ -523,16 +540,15 @@ export default function ViewDoner() {
     },
   };
 
-  return (
-    <div style={styles.container}>
-      <div style={styles.wrapper}>
-        {/* Header */}
-        <div style={styles.header}>
-          <h1 style={styles.headerTitle}>DONOR RECORDS</h1>
-          <p style={styles.headerSubtitle}>
-            Search and view donor information grouped by mobile number
-          </p>
-        </div>
+  const mainContent = (
+    <div style={styles.wrapper}>
+      {/* Header */}
+      <div style={styles.header}>
+        <h1 style={styles.headerTitle}>DONOR RECORDS</h1>
+        <p style={styles.headerSubtitle}>
+          Search and view donor information grouped by mobile number
+        </p>
+      </div>
 
         {/* Main Card */}
         <div style={styles.card}>
@@ -905,6 +921,80 @@ export default function ViewDoner() {
           </div>
         </div>
       </div>
+    
+  );
+
+  // If used as modal, wrap with modal styles
+  if (isModal) {
+    return (
+      <div style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+        padding: "1rem",
+        backdropFilter: "blur(5px)",
+      }}>
+        <div style={{
+          background: "white",
+          borderRadius: "16px",
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
+          width: "95%",
+          maxWidth: "1000px",
+          maxHeight: "90vh",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}>
+          {/* Close Button */}
+          <div style={{
+            padding: "1rem",
+            borderBottom: "1px solid #e9ecef",
+            display: "flex",
+            justifyContent: "flex-end",
+          }}>
+            <button
+              onClick={onClose}
+              style={{
+                background: "#ef4444",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                padding: "0.5rem 1rem",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                fontWeight: "600",
+                transition: "background 0.3s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#dc2626")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#ef4444")}
+            >
+              ✕ Close
+            </button>
+          </div>
+          {/* Content */}
+          <div style={{
+            overflowY: "auto",
+            flex: 1,
+          }}>
+            <div style={{ ...styles.container, minHeight: "auto", padding: "0" }}>
+              {mainContent}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={styles.container}>
+      {mainContent}
     </div>
   );
 }

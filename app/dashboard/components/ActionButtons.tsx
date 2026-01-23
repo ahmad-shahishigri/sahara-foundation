@@ -127,6 +127,10 @@
 // app/dashboard/components/ActionButtons.tsx
 "use client";
 
+"use client";
+
+import { useRouter } from "next/navigation";
+
 interface ActionButtonsProps {
   onAddDonor: () => void;
   onAddExpense: () => void;
@@ -142,6 +146,7 @@ export default function ActionButtons({
   onViewDonors, 
   onViewLoanRecords 
 }: ActionButtonsProps) {
+  const router = useRouter();
   // Common styles for all buttons
   const actionCardStyle = {
     background: "white",
@@ -289,7 +294,7 @@ export default function ActionButtons({
         {/* Loan Records */}
         <div 
           style={actionCardStyle}
-          onClick={onViewLoanRecords}
+          onClick={() => router.push("/loanrecord")}
           onMouseEnter={(e) => handleMouseEnter(e, "#51cf66")}
           onMouseLeave={handleMouseLeave}
         >

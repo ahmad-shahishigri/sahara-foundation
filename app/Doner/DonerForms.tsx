@@ -50,7 +50,11 @@ export default function DonerForm({ onClose, onSuccess }: DonerFormProps) {
       } else {
         setSuccess("Donor record has been successfully added to the system!");
         e.currentTarget.reset();
-        if (onSuccess) onSuccess();
+        
+        // Wait a moment before calling onSuccess to ensure DB sync
+        setTimeout(() => {
+          if (onSuccess) onSuccess();
+        }, 300);
       }
     } catch (err) {
       console.error(err);

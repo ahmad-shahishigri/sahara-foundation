@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import styles from "./dashboard.module.css";
+import { supabase } from "@/lib/supabaseClient";
 import StatCard from "./components/StatCard";
 import ActionButtons from "./components/ActionButtons";
 import RecentActivity from "./components/RecentActivity";
@@ -73,10 +74,58 @@ export default function DashboardPage() {
     }
     
     fetchStats();
+
+    // Setup real-time subscription to auto-refresh dashboard when data changes
+    const donorsChannel = supabase
+      .channel('doners_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'doners'
+        },
+        () => {
+          console.log('Doner changed');
+          setRefreshKey(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    const expenseChannel = supabase
+      .channel('expense_records_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'expense_records'
+        },
+        () => {
+          console.log('Expense/Loan changed');
+          setRefreshKey(prev => prev + 1);
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions
+    return () => {
+      donorsChannel.unsubscribe();
+      expenseChannel.unsubscribe();
+    };
   }, [refreshKey]);
 
   // Handle successful actions
-  const handleSuccess = () => {
+  const handleSuccess = async () => {
+    // Add a small delay to ensure database is synced
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Close all modals
+    setShowDonorForm(false);
+    setShowExpenseForm(false);
+    setShowLoanForm(false);
+    
+    // Refresh the dashboard data
     setRefreshKey(prev => prev + 1);
   };
 
@@ -289,65 +338,9 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* View Donors - Show notification if not available */}
+      {/* View Donors */}
       {showViewDonors && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9999,
-          padding: "1rem",
-        }}>
-          <div style={{
-            background: "white",
-            borderRadius: "12px",
-            padding: "2rem",
-            maxWidth: "500px",
-            width: "100%",
-          }}>
-            <div style={{ textAlign: "center" }}>
-              <div style={{
-                width: "60px",
-                height: "60px",
-                borderRadius: "50%",
-                background: "#9775fa",
-                color: "white",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "1.5rem",
-                margin: "0 auto 1rem",
-              }}>
-                ⚠️
-              </div>
-              <h2 style={{ marginBottom: "1rem" }}>View Donors</h2>
-              <p style={{ marginBottom: "1.5rem", color: "#666" }}>
-                The View Donors component is not implemented yet.
-              </p>
-              <button 
-                onClick={() => setShowViewDonors(false)}
-                style={{
-                  padding: "0.75rem 2rem",
-                  background: "#9775fa",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "8px",
-                  fontSize: "1rem",
-                  cursor: "pointer",
-                }}
-              >
-                Close
-              </button>
-            </div>
-            <ViewDonors/>
-          </div>
-        </div>
+        <ViewDonors isModal={true} onClose={() => setShowViewDonors(false)} />
       )}
 
       {/* Loan Records Modal */}

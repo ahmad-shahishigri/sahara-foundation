@@ -128,15 +128,13 @@ export default function ExpenseForm({ onClose, onSuccess, expenseType: initialTy
             ? "Loan record has been successfully added!"
             : "Expense record has been successfully added!"
         );
-        // e.currentTarget.reset();
         
-        // Call onSuccess callback if provided
+        // Call onSuccess callback if provided with a slight delay for DB sync
         if (onSuccess) {
-          // Close modal after 2 seconds
           setTimeout(() => {
-            if (onClose) onClose();
             onSuccess();
-          }, 2000);
+            if (onClose) onClose();
+          }, 500);
         }
       }
     } catch (err) {

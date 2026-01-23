@@ -46,7 +46,7 @@ export default function LoanFormModal({ onClose, onSuccess }: LoanFormModalProps
             justifyContent: "space-between",
             alignItems: "center",
             padding: "1.5rem 2rem",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: "linear-gradient(135deg, #4c6ef5, #3b5bdb)",
             color: "white",
             flexShrink: 0,
           }}

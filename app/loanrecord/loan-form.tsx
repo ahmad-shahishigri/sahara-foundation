@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import styles from "./loanform.module.css";
 
@@ -40,6 +41,7 @@ type LoanReturnType = {
 };
 
 export default function LoanForm() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
   const [records, setRecords] = useState<ExpenseRecordType[]>([]);
   const [filteredRecords, setFilteredRecords] = useState<ExpenseRecordType[]>([]);
@@ -52,6 +54,7 @@ export default function LoanForm() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showReturnModal, setShowReturnModal] = useState(false);
   const [selectedLoanForReturn, setSelectedLoanForReturn] = useState<ExpenseRecordType | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [returnData, setReturnData] = useState({
     amount: "",
     date: new Date().toISOString().split("T")[0],
@@ -70,10 +73,33 @@ export default function LoanForm() {
     "Other"
   ];
 
-  // Fetch all records
+  // Fetch all records and setup real-time listener
   useEffect(() => {
     fetchRecords();
-  }, [viewMode]);
+    
+    // Setup real-time subscription to auto-refresh when data changes
+    const channel = supabase
+      .channel('expense_records_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'expense_records'
+        },
+        (payload) => {
+          console.log('Record changed:', payload);
+          // Refetch records when there's a change
+          fetchRecords();
+        }
+      )
+      .subscribe();
+    
+    // Cleanup subscription
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [viewMode, refreshKey]);
 
   // Filter records based on search
   useEffect(() => {
@@ -1229,6 +1255,8 @@ export default function LoanForm() {
   return (
     <div style={stylesObj.container}>
       <div style={stylesObj.wrapper}>
+        
+
         {/* Header */}
         <div style={stylesObj.header}>
           <h1 style={stylesObj.headerTitle}>LOAN & EXPENSE RECORDS</h1>
@@ -1238,9 +1266,33 @@ export default function LoanForm() {
         </div>
 
         {/* Main Card */}
+
+        
         <div style={stylesObj.card}>
+          
           {/* Search Section */}
           <div style={stylesObj.searchSection}>
+            {/* Back Button */}
+        <button
+          onClick={() => router.back()}
+          style={{
+            position: "absolute",
+            // top: "20px",
+            // left: "20px",
+            backgroundColor: "green",
+            border: "none",
+            fontSize: "1.5rem",
+            cursor: "pointer",
+            padding: "5px 10px",
+            borderRadius: "6px",
+               // transition: "background-color 0.3s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.05)")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          title="Go back"
+        >
+          ← Back
+        </button>
             <div style={stylesObj.searchContainer}>
               <label style={stylesObj.searchLabel}>
                 🔍 SEARCH BY NAME, NUMBER, OR PURPOSE
@@ -1271,6 +1323,9 @@ export default function LoanForm() {
               >
                 📊 All Records
               </button>
+
+
+              
               <button
                 style={{
                   ...stylesObj.filterButton,
