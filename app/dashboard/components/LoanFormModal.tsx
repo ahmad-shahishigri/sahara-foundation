@@ -6,9 +6,11 @@ import ExpenseForm from "../../spent/spent-form";
 type LoanFormModalProps = {
   onClose: () => void;
   onSuccess?: () => void;
+  onOptimistic?: (r: any) => void;
+  onRollback?: (id: string) => void;
 };
 
-export default function LoanFormModal({ onClose, onSuccess }: LoanFormModalProps) {
+export default function LoanFormModal({ onClose, onSuccess, onOptimistic, onRollback }: LoanFormModalProps) {
   return (
     <div
       style={{

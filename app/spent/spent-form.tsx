@@ -27,11 +27,13 @@ type ExpenseRecordType = {
 type ExpenseFormProps = {
   onClose?: () => void;
   onSuccess?: () => void;
+  onOptimistic?: (record: any) => void;
+  onRollback?: (tempId: string) => void;
   expenseType?: "loan" | "expense";
   hideHeader?: boolean;
 };
 
-export default function ExpenseForm({ onClose, onSuccess, expenseType: initialType, hideHeader = false }: ExpenseFormProps = {}) {
+export default function ExpenseForm({ onClose, onSuccess, onOptimistic, onRollback, expenseType: initialType, hideHeader = false }: ExpenseFormProps = {}) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -114,14 +116,20 @@ export default function ExpenseForm({ onClose, onSuccess, expenseType: initialTy
 
     const data: ExpenseRecordType = { ...baseData, ...loanData };
 
+    const tempId = `temp-exp-${Date.now()}`;
+    const optimisticRecord = { ...data, id: tempId, created_at: new Date().toISOString(), __optimistic: true } as any;
+
     try {
+      // optimistic UI update
+      if (onOptimistic) onOptimistic(optimisticRecord);
+
       const { error } = await supabase
         .from("expense_records")
         .insert([data]);
 
       if (error) {
         console.error(error);
-        // setError("Failed to add record. Please try again.");
+        if (onRollback) onRollback(tempId);
       } else {
         setSuccess(
           expenseType === "loan" 
@@ -139,7 +147,7 @@ export default function ExpenseForm({ onClose, onSuccess, expenseType: initialTy
       }
     } catch (err) {
       console.error(err);
-      // setError("An unexpected error occurred. Please try again.");
+      if (onRollback) onRollback(tempId);
     } finally {
       setLoading(false);
     }
@@ -225,7 +233,9 @@ export default function ExpenseForm({ onClose, onSuccess, expenseType: initialTy
         padding: "1.5rem 2rem",
         background: expenseType === "expense" ? "linear-gradient(135deg, #ff922b, #fd7e14)" : "white",
         color: expenseType === "expense" ? "white" : "#333",
-        border: `2px solid ${expenseType === "expense" ? "#ff922b" : "#e9ecef"}`,
+        borderWidth: "2px",
+        borderStyle: "solid",
+        borderColor: expenseType === "expense" ? "#ff922b" : "#e9ecef",
         borderRadius: "14px",
         fontSize: "1.2rem",
         fontWeight: "600",
@@ -266,7 +276,9 @@ export default function ExpenseForm({ onClose, onSuccess, expenseType: initialTy
         padding: "1.5rem 2rem",
         background: expenseType === "loan" ? "linear-gradient(135deg, #ff922b, #fd7e14)" : "white",
         color: expenseType === "loan" ? "white" : "#333",
-        border: `2px solid ${expenseType === "loan" ? "#ff922b" : "#e9ecef"}`,
+        borderWidth: "2px",
+        borderStyle: "solid",
+        borderColor: expenseType === "loan" ? "#ff922b" : "#e9ecef",
         borderRadius: "14px",
         fontSize: "1.2rem",
         fontWeight: "600",

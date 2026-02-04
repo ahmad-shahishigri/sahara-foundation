@@ -1,7 +1,6 @@
 /* ================= ROOT FIX ================= */
 html, body {
   height: 100%;
-  overflow: hidden;
   margin: 0;
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }

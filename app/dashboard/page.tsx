@@ -60,60 +60,61 @@ export default function DashboardPage() {
   }, []);
 
   // Fetch dashboard stats
+  // Fetch stats whenever refreshKey changes
   useEffect(() => {
+    let mounted = true;
     async function fetchStats() {
       try {
         setLoading(true);
         const data = await getDashboardStats();
+        if (!mounted) return;
         setStats(data);
       } catch (error) {
         console.error("Error fetching dashboard stats:", error);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
-    
+
     fetchStats();
 
-    // Setup real-time subscription to auto-refresh dashboard when data changes
-    const donorsChannel = supabase
-      .channel('doners_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'doners'
-        },
-        () => {
-          console.log('Doner changed');
-          setRefreshKey(prev => prev + 1);
-        }
-      )
-      .subscribe();
-
-    const expenseChannel = supabase
-      .channel('expense_records_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'expense_records'
-        },
-        () => {
-          console.log('Expense/Loan changed');
-          setRefreshKey(prev => prev + 1);
-        }
-      )
-      .subscribe();
-
-    // Cleanup subscriptions
     return () => {
-      donorsChannel.unsubscribe();
-      expenseChannel.unsubscribe();
+      mounted = false;
     };
   }, [refreshKey]);
+
+  // Setup realtime subscriptions once (do not recreate on every refresh)
+  useEffect(() => {
+    let donorsChannel: any | null = null;
+    let expenseChannel: any | null = null;
+
+    try {
+      donorsChannel = supabase
+        .channel('doners_changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'doners' },
+          () => setRefreshKey(prev => prev + 1)
+        )
+        .subscribe();
+
+      expenseChannel = supabase
+        .channel('expense_records_changes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'expense_records' },
+          () => setRefreshKey(prev => prev + 1)
+        )
+        .subscribe();
+    } catch (err) {
+      console.warn('Realtime subscription failed (optional):', err);
+    }
+
+    return () => {
+      if (donorsChannel && typeof donorsChannel.unsubscribe === 'function') donorsChannel.unsubscribe();
+      if (expenseChannel && typeof expenseChannel.unsubscribe === 'function') expenseChannel.unsubscribe();
+    };
+  }, []);
 
   // Handle successful actions
   const handleSuccess = async () => {
@@ -129,6 +130,77 @@ export default function DashboardPage() {
     setRefreshKey(prev => prev + 1);
   };
 
+  // ----- Optimistic UI helpers -----
+  const applyOptimisticDonor = (donor: any) => {
+    setStats((prev: any) => {
+      const p = prev || {};
+      const totalFunds = (p.totalFunds || 0) + (donor.total_amount || 0);
+      const totalDonors = (p.totalDonors || 0) + 1;
+      const availableBalance = (p.availableBalance || 0) + (donor.total_amount || 0);
+      const recentDonors = [donor, ...(p.recentDonors || [])].slice(0, 5);
+      return { ...p, totalFunds, totalDonors, availableBalance, recentDonors };
+    });
+  };
+
+  const rollbackDonor = (tempId: string) => {
+    setStats((prev: any) => {
+      if (!prev) return prev;
+      const recentDonors = (prev.recentDonors || []).filter((d: any) => d.id !== tempId);
+      const removed = (prev.recentDonors || []).find((d: any) => d.id === tempId);
+      const totalFunds = removed ? Math.max(0, (prev.totalFunds || 0) - (removed.total_amount || 0)) : (prev.totalFunds || 0);
+      const totalDonors = removed ? Math.max(0, (prev.totalDonors || 0) - 1) : (prev.totalDonors || 0);
+      const availableBalance = removed ? Math.max(0, (prev.availableBalance || 0) - (removed.total_amount || 0)) : (prev.availableBalance || 0);
+      return { ...prev, recentDonors, totalFunds, totalDonors, availableBalance };
+    });
+  };
+
+  const applyOptimisticRecord = (rec: any) => {
+    setStats((prev: any) => {
+      const p = prev || {};
+      const recentTransactions = [rec, ...(p.recentTransactions || [])].slice(0, 5);
+      let totalExpenses = p.totalExpenses || 0;
+      let totalLoans = p.totalLoans || 0;
+      let totalActiveLoans = p.totalActiveLoans || 0;
+      let availableBalance = p.availableBalance || 0;
+
+      if (rec.type === "expense") {
+        totalExpenses += rec.total_amount || 0;
+        availableBalance -= rec.total_amount || 0;
+      } else {
+        totalLoans += rec.total_amount || 0;
+        totalActiveLoans += (rec.remaining_amount ?? rec.total_amount) || 0;
+        availableBalance -= rec.total_amount || 0;
+      }
+
+      return { ...p, recentTransactions, totalExpenses, totalLoans, totalActiveLoans, availableBalance };
+    });
+  };
+
+  const rollbackRecord = (tempId: string) => {
+    setStats((prev: any) => {
+      if (!prev) return prev;
+      const recentTransactions = (prev.recentTransactions || []).filter((r: any) => r.id !== tempId);
+      const removed = (prev.recentTransactions || []).find((r: any) => r.id === tempId);
+      let totalExpenses = prev.totalExpenses || 0;
+      let totalLoans = prev.totalLoans || 0;
+      let totalActiveLoans = prev.totalActiveLoans || 0;
+      let availableBalance = prev.availableBalance || 0;
+
+      if (removed) {
+        if (removed.type === "expense") {
+          totalExpenses = Math.max(0, totalExpenses - (removed.total_amount || 0));
+          availableBalance = Math.max(0, availableBalance + (removed.total_amount || 0));
+        } else {
+          totalLoans = Math.max(0, totalLoans - (removed.total_amount || 0));
+          totalActiveLoans = Math.max(0, totalActiveLoans - ((removed.remaining_amount ?? removed.total_amount) || 0));
+          availableBalance = Math.max(0, availableBalance + (removed.total_amount || 0));
+        }
+      }
+
+      return { ...prev, recentTransactions, totalExpenses, totalLoans, totalActiveLoans, availableBalance };
+    });
+  };
+
   // Default values if stats are null
   const {
     totalFunds = 0,
@@ -142,6 +214,14 @@ export default function DashboardPage() {
     recentDonors = [],
     recentTransactions = []
   } = stats || {};
+
+  // Derived, dynamic UI values (used for progress bars & descriptions)
+  const avgDonation = totalDonors > 0 ? Math.round(totalFunds / totalDonors) : 0;
+  const fundsUtilizationPct = totalFunds > 0 ? Math.round(((totalExpenses + totalActiveLoans) / totalFunds) * 100) : 0;
+  const availablePct = totalFunds > 0 ? Math.round((availableBalance / totalFunds) * 100) : 0;
+  const loansOutstandingPct = totalLoans > 0 ? Math.round((totalActiveLoans / totalLoans) * 100) : 0;
+  const expensesPct = totalFunds > 0 ? Math.round((totalExpenses / totalFunds) * 100) : 0;
+  const recoveryPct = totalLoans > 0 ? Math.round(((totalLoans - totalActiveLoans) / totalLoans) * 100) : 0;
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -184,7 +264,8 @@ export default function DashboardPage() {
           amount={formatCurrency(totalFunds)}
           icon="💰"
           trend="positive"
-          description="All-time donations"
+          progress={100}
+          description={`${totalDonors} donors • Avg ${formatCurrency(avgDonation)}`}
         />
         
         <StatCard 
@@ -192,7 +273,8 @@ export default function DashboardPage() {
           amount={formatCurrency(availableBalance)}
           icon="💳"
           trend={availableBalance > 0 ? "positive" : "negative"}
-          description="Current usable funds"
+          progress={availablePct}
+          description={`${availablePct}% available of total funds`}
         />
         
         <StatCard 
@@ -200,7 +282,8 @@ export default function DashboardPage() {
           amount={formatCurrency(totalLoans)}
           icon="📝"
           trend="neutral"
-          description={`${totalLoansCount} loan records`}
+          progress={loansOutstandingPct}
+          description={`${totalLoansCount} loans • ${loansOutstandingPct}% outstanding`}
         />
         
         <StatCard 
@@ -208,7 +291,8 @@ export default function DashboardPage() {
           amount={formatCurrency(totalExpenses)}
           icon="💸"
           trend="expense"
-          description={`${totalExpensesCount} expense records`}
+          progress={expensesPct}
+          description={`${totalExpensesCount} expenses • ${expensesPct}% of funds`}
         />
       </div>
 
@@ -219,7 +303,8 @@ export default function DashboardPage() {
           amount={formatCurrency(totalActiveLoans)}
           icon="🔄"
           trend="warning"
-          description="Outstanding loan amount"
+          progress={loansOutstandingPct}
+          description={`${formatCurrency(totalActiveLoans)} outstanding`}
           variant="secondary"
         />
         
@@ -228,25 +313,28 @@ export default function DashboardPage() {
           amount={formatNumber(totalDonors)}
           icon="👥"
           trend="positive"
-          description="Active contributors"
+          progress={100}
+          description={`${totalDonors} active contributors • Avg ${formatCurrency(avgDonation)}`}
           variant="secondary"
         />
         
         <StatCard 
           title="Loan Recovery Rate" 
-          amount={`${totalLoans > 0 ? Math.round(((totalLoans - totalActiveLoans) / totalLoans) * 100) : 0}%`}
+          amount={`${recoveryPct}%`}
           icon="📊"
           trend="positive"
-          description="Amount recovered"
+          progress={recoveryPct}
+          description={`${formatCurrency(totalLoans - totalActiveLoans)} recovered of ${formatCurrency(totalLoans)}`}
           variant="secondary"
         />
         
         <StatCard 
           title="Funds Utilization" 
-          amount={`${totalFunds > 0 ? Math.round(((totalExpenses + totalActiveLoans) / totalFunds) * 100) : 0}%`}
+          amount={`${fundsUtilizationPct}%`}
           icon="⚡"
           trend="neutral"
-          description="Used vs Available"
+          progress={fundsUtilizationPct}
+          description={`${formatCurrency(totalExpenses + totalActiveLoans)} used of ${formatCurrency(totalFunds)}`}
           variant="secondary"
         />
       </div>
@@ -270,46 +358,7 @@ export default function DashboardPage() {
           />
         </div>
         
-        <div className={styles.quickStats}>
-          <h3 className={styles.sectionTitle}>📈 Quick Statistics</h3>
-          <div className={styles.quickStatsGrid}>
-            <div className={styles.quickStatItem}>
-              <div className={styles.quickStatIcon}>💰</div>
-              <div className={styles.quickStatContent}>
-                <div className={styles.quickStatLabel}>Avg. Donation</div>
-                <div className={styles.quickStatValue}>
-                  {totalDonors > 0 ? formatCurrency(totalFunds / totalDonors) : formatCurrency(0)}
-                </div>
-              </div>
-            </div>
-            
-            <div className={styles.quickStatItem}>
-              <div className={styles.quickStatIcon}>📅</div>
-              <div className={styles.quickStatContent}>
-                <div className={styles.quickStatLabel}>This Month</div>
-                <div className={styles.quickStatValue}>
-                  {formatCurrency(totalFunds * 0.1)}
-                </div>
-              </div>
-            </div>
-            
-            <div className={styles.quickStatItem}>
-              <div className={styles.quickStatIcon}>🎯</div>
-              <div className={styles.quickStatContent}>
-                <div className={styles.quickStatLabel}>Most Active Category</div>
-                <div className={styles.quickStatValue}>Charity</div>
-              </div>
-            </div>
-            
-            <div className={styles.quickStatItem}>
-              <div className={styles.quickStatIcon}>📱</div>
-              <div className={styles.quickStatContent}>
-                <div className={styles.quickStatLabel}>Top Payment Method</div>
-                <div className={styles.quickStatValue}>Easypaisa</div>
-              </div>
-            </div>
-          </div>
-        </div>
+
       </div>
 
       {/* MODALS */}
@@ -319,6 +368,8 @@ export default function DashboardPage() {
         <DonerForm 
           onClose={() => setShowDonorForm(false)}
           onSuccess={handleSuccess}
+          onOptimistic={applyOptimisticDonor}
+          onRollback={rollbackDonor}
         />
       )}
 
@@ -327,6 +378,8 @@ export default function DashboardPage() {
         <ExpenseFormModal 
           onClose={() => setShowExpenseForm(false)}
           onSuccess={handleSuccess}
+          onOptimistic={applyOptimisticRecord}
+          onRollback={rollbackRecord}
         />
       )}
 
@@ -335,12 +388,14 @@ export default function DashboardPage() {
         <LoanFormModal 
           onClose={() => setShowLoanForm(false)}
           onSuccess={handleSuccess}
+          onOptimistic={applyOptimisticRecord}
+          onRollback={rollbackRecord}
         />
       )}
 
       {/* View Donors */}
       {showViewDonors && (
-        <ViewDonors isModal={true} onClose={() => setShowViewDonors(false)} />
+        <ViewDonors isModal={true} onClose={() => setShowViewDonors(false)} refreshKey={refreshKey} />
       )}
 
       {/* Loan Records Modal */}

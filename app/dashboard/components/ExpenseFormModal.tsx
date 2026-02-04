@@ -6,9 +6,11 @@ import ExpenseForm from "../../spent/spent-form";
 type ExpenseFormModalProps = {
   onClose: () => void;
   onSuccess?: () => void;
+  onOptimistic?: (r: any) => void;
+  onRollback?: (id: string) => void;
 };
 
-export default function ExpenseFormModal({ onClose, onSuccess }: ExpenseFormModalProps) {
+export default function ExpenseFormModal({ onClose, onSuccess, onOptimistic, onRollback }: ExpenseFormModalProps) {
   return (
     <div
       style={{
@@ -89,7 +91,7 @@ export default function ExpenseFormModal({ onClose, onSuccess }: ExpenseFormModa
             padding: "2rem",
           }}
         >
-          <ExpenseForm onClose={onClose} onSuccess={onSuccess} expenseType="expense" hideHeader={true} />
+          <ExpenseForm onClose={onClose} onSuccess={onSuccess} onOptimistic={onOptimistic} onRollback={onRollback} expenseType="expense" hideHeader={true} />
         </div>
       </div>
     </div>

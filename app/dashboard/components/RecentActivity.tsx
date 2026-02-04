@@ -132,6 +132,7 @@
 
 "use client";
 
+import { useState } from "react";
 import styles from "../dashboard.module.css";
 
 type RecentActivityProps = {
@@ -158,6 +159,17 @@ export default function RecentActivity({ recentDonors, recentTransactions }: Rec
     }).format(amount);
   };
 
+  const getInitials = (name = "") => {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  };
+
+  // state: search + visible count for 'show more' behavior
+  const [searchTerm, setSearchTerm] = useState("");
+  const [visibleCount, setVisibleCount] = useState(6);
+
   const combinedActivities = [
     ...recentDonors.map(donor => ({
       type: "donation" as const,
@@ -165,50 +177,146 @@ export default function RecentActivity({ recentDonors, recentTransactions }: Rec
       amount: donor.total_amount,
       date: donor.created_at,
       icon: "💰",
-      color: "#10b981"
+      color: "#10b981",
+      purpose: donor.purpose || "Donation"
     })),
     ...recentTransactions.map(transaction => ({
       type: transaction.type,
-      name: transaction.recipient_name || transaction.borrower_name,
+      name: transaction.recipient_name || transaction.borrower_name || "Unknown",
       amount: transaction.total_amount,
       date: transaction.created_at,
       icon: transaction.type === "loan" ? "📝" : "💸",
-      color: transaction.type === "loan" ? "#3b82f6" : "#8b5cf6"
+      color: transaction.type === "loan" ? "#3b82f6" : "#8b5cf6",
+      purpose: transaction.purpose || (transaction.type === "loan" ? "Loan Disbursed" : "Expense")
     }))
   ]
-  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-  .slice(0, 6);
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  // client-side search (name, purpose, amount)
+  const filtered = combinedActivities.filter((act) => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.toLowerCase();
+    return (
+      (act.name || "").toLowerCase().includes(q) ||
+      (act.purpose || "").toLowerCase().includes(q) ||
+      String(act.amount).toLowerCase().includes(q)
+    );
+  });
+
+  const visible = filtered.slice(0, visibleCount);
 
   return (
-    <div className={styles.recentActivityList}>
-      {combinedActivities.length > 0 ? (
-        combinedActivities.map((activity, index) => (
-          <div key={index} className={styles.activityItem}>
-            <div 
-              className={styles.activityIcon}
-              style={{ background: activity.color + "20", color: activity.color }}
-            >
-              {activity.icon}
-            </div>
-            <div className={styles.activityContent}>
-              <div className={styles.activityHeader}>
-                <span className={styles.activityName}>{activity.name}</span>
-                <span className={styles.activityAmount}>{formatCurrency(activity.amount)}</span>
-              </div>
-              <div className={styles.activityFooter}>
-                <span className={styles.activityType}>
-                  {activity.type === "donation" ? "Donation" : 
-                   activity.type === "loan" ? "Loan Disbursed" : "Expense"}
-                </span>
-                <span className={styles.activityTime}>{formatDate(activity.date)}</span>
-              </div>
-            </div>
+    <div>
+      <div className={styles.activityToolbar}>
+        <div className={styles.activityToolbarLeft}>
+          {/* <h3 className={styles.sectionTitle}>📋 Recent activity</h3> */}
+          <div className={styles.activityMeta}>{filtered.length} items</div>
+        </div>
+
+        <div className={styles.activityToolbarRight}>
+          <div className={styles.searchWrap} role="search">
+            <input
+              aria-label="Search recent activity"
+              placeholder="Search name, purpose or amount..."
+              className={styles.activitySearch}
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setVisibleCount(6); }}
+            />
+            {searchTerm && (
+              <button className={styles.clearSearch} onClick={() => setSearchTerm("")}>✕</button>
+            )}
           </div>
-        ))
-      ) : (
-        <div className={styles.noActivity}>
-          <div className={styles.noActivityIcon}>📭</div>
-          <p>No recent activity</p>
+
+          <button
+            className={styles.exportButton}
+            onClick={() => {
+              // simple CSV export of filtered rows
+              const rows = filtered.map(r => ({ type: r.type, name: r.name, purpose: r.purpose, amount: r.amount, date: r.date }));
+              const csv = [Object.keys(rows[0] || {}).join(","), ...rows.map(r => Object.values(r).map(String).map(v => `"${v.replace(/"/g, '""')}"`).join(","))].join("\n");
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `recent-activity.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            title="Export visible rows as CSV"
+          >
+            ⤓ Export
+          </button>
+        </div>
+      </div>
+
+      <div className={styles.recentActivityTableWrapper} aria-label="Recent activity table">
+        <table className={styles.recentActivityTable} role="table">
+          <thead>
+            <tr role="row" className={styles.recentTableHeader}>
+              <th role="columnheader" className={styles.cellType}>Type</th>
+              <th role="columnheader" className={styles.cellName}>Name</th>
+              <th role="columnheader" className={styles.cellPurpose}>Purpose</th>
+              <th role="columnheader" className={styles.cellAmount}>Amount</th>
+              <th role="columnheader" className={styles.cellTime}>Date</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {visible.length === 0 && (
+              <tr role="row" className={styles.emptyRow}>
+                <td role="cell" colSpan={5} style={{ textAlign: "center", padding: "2rem 1rem", color: "#9aa1ab" }}>
+                  📭 No matching activity
+                </td>
+              </tr>
+            )}
+
+            {visible.map((activity, i) => (
+              <tr
+                key={i}
+                role="row"
+                className={styles.recentTableRow}
+                title={`${activity.name} — ${activity.purpose} — ${formatCurrency(activity.amount)}`}
+                style={(activity as any).__optimistic ? { opacity: 0.65 } : undefined}
+              >
+                <td role="cell" className={styles.cellType}>
+                  <span className={styles.activityType} style={{ background: activity.color + "10", color: activity.color }}>
+                    {activity.type === "donation" ? "Donation" : activity.type === "loan" ? "Loan" : "Expense"}
+                  </span>
+                </td>
+
+                <td role="cell" className={styles.cellName}>
+                  <div className={styles.rowNameWrap}>
+                    <div className={styles.activityIcon} aria-hidden style={{ background: activity.color + "1A", color: activity.color }}>
+                      <span className={styles.activityInitials}>{getInitials(activity.name)}</span>
+                    </div>
+                    <div className={styles.nameCellText}>
+                      <div className={styles.activityName}>{activity.name} {(activity as any).__optimistic && <span className={styles.pendingTag}>(pending)</span>}</div>
+                      <div className={styles.activitySubText}>{activity.purpose}</div>
+                    </div>
+                  </div>
+                </td>
+
+                <td role="cell" className={styles.cellPurpose}>
+                  <div className={styles.activityPurpose}>{activity.purpose}</div>
+                </td>
+
+                <td role="cell" className={styles.cellAmount}>
+                  <div className={styles.activityAmount}>{formatCurrency(activity.amount)}</div>
+                </td>
+
+                <td role="cell" className={styles.cellTime}>
+                  <div className={styles.activityTime}>{formatDate(activity.date)}</div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {filtered.length > visibleCount && (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
+          <button className={styles.loadMoreButton} onClick={() => setVisibleCount((v) => v + 6)}>
+            Show more ({Math.min(filtered.length - visibleCount, 12)})
+          </button>
         </div>
       )}
     </div>

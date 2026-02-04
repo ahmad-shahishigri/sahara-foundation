@@ -41,6 +41,25 @@ export default function LoanRecordsModal({ isOpen, onClose }: LoanRecordsModalPr
       fetchRecords();
       // Prevent body scroll when modal is open
       document.body.style.overflow = "hidden";
+
+      // Realtime updates while modal is open (keeps list fresh)
+      try {
+        const channel = supabase
+          .channel("expense_records_changes_modal")
+          .on(
+            "postgres_changes",
+            { event: "*", schema: "public", table: "expense_records" },
+            () => fetchRecords()
+          )
+          .subscribe();
+
+        return () => {
+          if (channel && typeof channel.unsubscribe === "function") channel.unsubscribe();
+          document.body.style.overflow = "unset";
+        };
+      } catch (err) {
+        console.warn("Realtime subscription (expense_records) failed:", err);
+      }
     } else {
       document.body.style.overflow = "unset";
     }

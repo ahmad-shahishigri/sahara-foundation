@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 type DonerType = {
@@ -16,12 +17,15 @@ type DonerType = {
 type DonerFormProps = {
   onClose: () => void;
   onSuccess?: () => void;
+  onOptimistic?: (record: any) => void;
+  onRollback?: (tempId: string) => void;
 };
 
-export default function DonerForm({ onClose, onSuccess }: DonerFormProps) {
+export default function DonerForm({ onClose, onSuccess, onOptimistic, onRollback }: DonerFormProps) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -29,7 +33,9 @@ export default function DonerForm({ onClose, onSuccess }: DonerFormProps) {
     setSuccess(null);
     setError(null);
 
-    const formData = new FormData(e.currentTarget);
+    // capture the form synchronously — don't use the pooled event after awaits
+    const form = e.currentTarget as HTMLFormElement;
+    const formData = new FormData(form);
 
     const data: DonerType = {
       name: formData.get("name") as string,
@@ -41,24 +47,41 @@ export default function DonerForm({ onClose, onSuccess }: DonerFormProps) {
       donation_date: formData.get("donation_date") as string,
     };
 
+    // optimistic id so UI can render immediately and we can rollback if needed
+    const tempId = `temp-doner-${Date.now()}`;
+    const optimisticRecord = { ...data, id: tempId, created_at: new Date().toISOString(), __optimistic: true };
+
     try {
+      // fire optimistic update immediately
+      if (onOptimistic) onOptimistic(optimisticRecord);
+
       const { error } = await supabase.from("doners").insert([data]);
 
       if (error) {
         console.error(error);
         setError("Failed to add donor. Please try again.");
+        // rollback optimistic update
+        if (onRollback) onRollback(tempId);
       } else {
         setSuccess("Donor record has been successfully added to the system!");
-        e.currentTarget.reset();
-        
-        // Wait a moment before calling onSuccess to ensure DB sync
-        setTimeout(() => {
-          if (onSuccess) onSuccess();
-        }, 300);
+        // form may have been unmounted — guard the reset
+        try {
+          form.reset();
+        } catch (resetErr) {
+          console.warn("Form reset failed (element may be unmounted):", resetErr);
+        }
+
+        // Prefer explicit parent handler; if none provided, refresh the route so other views update
+        if (onSuccess) {
+          setTimeout(() => onSuccess(), 300);
+        } else {
+          setTimeout(() => router.refresh(), 300);
+        }
       }
     } catch (err) {
       console.error(err);
       setError("An unexpected error occurred. Please try again.");
+      if (onRollback) onRollback(tempId);
     } finally {
       setLoading(false);
     }
@@ -185,7 +208,9 @@ export default function DonerForm({ onClose, onSuccess }: DonerFormProps) {
     input: {
       width: "100%",
       padding: "0.75rem 1rem",
-      border: `1px solid ${colors.border}`,
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: colors.border,
       borderRadius: "8px",
       fontSize: "0.95rem",
       transition: "all 0.2s ease",
@@ -200,7 +225,9 @@ export default function DonerForm({ onClose, onSuccess }: DonerFormProps) {
     select: {
       width: "100%",
       padding: "0.75rem 1rem",
-      border: `1px solid ${colors.border}`,
+      borderWidth: "1px",
+      borderStyle: "solid",
+      borderColor: colors.border,
       borderRadius: "8px",
       fontSize: "0.95rem",
       transition: "all 0.2s ease",

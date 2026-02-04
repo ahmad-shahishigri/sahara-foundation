@@ -24,6 +24,7 @@ type StatCardProps = {
   icon: string;
   trend: "positive" | "negative" | "neutral" | "warning" | "expense";
   description: string;
+  progress?: number; // 0-100, optional
   variant?: "primary" | "secondary";
 };
 
@@ -33,6 +34,7 @@ export default function StatCard({
   icon, 
   trend, 
   description, 
+  progress, 
   variant = "primary" 
 }: StatCardProps) {
   
@@ -56,6 +58,10 @@ export default function StatCard({
     }
   };
 
+  const safeProgress = typeof progress === 'number' && isFinite(progress)
+    ? Math.max(0, Math.min(100, Math.round(progress)))
+    : undefined;
+
   return (
     <div className={`${styles.statCard} ${styles[variant]}`}>
       <div className={styles.statHeader}>
@@ -74,16 +80,20 @@ export default function StatCard({
       </div>
       
       <div className={styles.statFooter}>
-        <div className={styles.progressBar}>
+        <div className={styles.progressBar} role={safeProgress !== undefined ? 'progressbar' : undefined} aria-valuemin={safeProgress !== undefined ? 0 : undefined} aria-valuemax={safeProgress !== undefined ? 100 : undefined} aria-valuenow={safeProgress !== undefined ? safeProgress : undefined} aria-label={safeProgress !== undefined ? `${safeProgress}%` : undefined}>
           <div 
             className={styles.progressFill} 
             style={{ 
-              width: trend === "positive" ? "75%" : 
-                     trend === "negative" ? "30%" :
-                     trend === "warning" ? "50%" : "60%",
+              width: safeProgress !== undefined ? `${safeProgress}%` : (trend === "positive" ? "75%" : trend === "negative" ? "30%" : trend === "warning" ? "50%" : "60%"),
               background: getTrendColor()
             }}
           />
+          {safeProgress !== undefined && (
+            <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280', display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ opacity: 0.9 }}>{description}</span>
+              <strong style={{ color: getTrendColor() }}>{safeProgress}%</strong>
+            </div>
+          )}
         </div>
       </div>
     </div>

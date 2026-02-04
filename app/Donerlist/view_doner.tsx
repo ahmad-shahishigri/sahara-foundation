@@ -42,9 +42,10 @@ type DonationRecord = {
 interface ViewDonerProps {
   isModal?: boolean;
   onClose?: () => void;
+  refreshKey?: number; // optional external signal to re-fetch
 }
 
-export default function ViewDoner({ isModal = false, onClose }: ViewDonerProps) {
+export default function ViewDoner({ isModal = false, onClose, refreshKey }: ViewDonerProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [doners, setDoners] = useState<DonerType[]>([]);
   const [filteredDoners, setFilteredDoners] = useState<DonerType[]>([]);
@@ -54,9 +55,43 @@ export default function ViewDoner({ isModal = false, onClose }: ViewDonerProps) 
   const [searchLoading, setSearchLoading] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "donations">("list");
 
+  // Fetch on mount and whenever a parent signals a refresh
   useEffect(() => {
     fetchDoners();
-  }, []);
+  }, [refreshKey]);
+
+  // Realtime subscription: keep the UI in sync while component/modal is open
+  useEffect(() => {
+    let channel: any | null = null;
+    try {
+      channel = supabase
+        .channel("view_doner_realtime")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "doners" },
+          () => {
+            fetchDoners();
+          }
+        )
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "transactions" },
+          () => {
+            // if donations detail view is open, refresh those too
+            if (selectedMobile) fetchAllDonationsForMobile(selectedMobile);
+            else fetchDoners();
+          }
+        )
+        .subscribe();
+    } catch (err) {
+      // ignore subscribe errors in environments without realtime enabled
+      console.warn("Realtime subscription failed (optional):", err);
+    }
+
+    return () => {
+      if (channel && typeof channel.unsubscribe === "function") channel.unsubscribe();
+    };
+  }, [selectedMobile]);
 
   useEffect(() => {
     if (searchTerm.trim() === "") {
