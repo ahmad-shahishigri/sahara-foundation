@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import styles from "./doner.module.css";
 
 type DonerType = {
   name: string;
@@ -15,14 +16,14 @@ type DonerType = {
 };
 
 type DonerFormProps = {
-  onClose?: () => void; // ✅ FIXED (optional now)
+  onClose?: () => void;
   onSuccess?: () => void;
   onOptimistic?: (record: any) => void;
   onRollback?: (tempId: string) => void;
 };
 
 export default function DonerForm({
-  onClose = () => {}, // ✅ SAFE DEFAULT FUNCTION
+  onClose = () => { },
   onSuccess,
   onOptimistic,
   onRollback,
@@ -57,7 +58,7 @@ export default function DonerForm({
     try {
       if (onOptimistic) onOptimistic(optimisticRecord);
 
-      const { error } = await supabase.from("doners").insert([data]);
+      const { error } = await supabase.from("doner").insert([data]);
 
       if (error) {
         console.error(error);
@@ -86,105 +87,147 @@ export default function DonerForm({
     }
   }
 
-  // 🔽🔽🔽 EVERYTHING BELOW THIS LINE IS 100% UNCHANGED 🔽🔽🔽
-
-  const colors = {
-    primary: "#4c6ef5",
-    primaryDark: "#3b5bdb",
-    secondary: "#6c757d",
-    success: "#20c997",
-    error: "#fa5252",
-    lightBg: "#f8f9fa",
-    border: "#e9ecef",
-    text: "#2d3748",
-    textLight: "#718096",
-  };
-
-  const styles = {
-    overlay: {
-      position: "fixed" as const,
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.7)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 9999,
-      padding: "1rem",
-      backdropFilter: "blur(5px)",
-    },
-    container: {
-      height: "90vh",
-      maxHeight: "90vh",
-      display: "flex",
-      flexDirection: "column" as const,
-      background: "white",
-      borderRadius: "16px",
-      boxShadow: "0 25px 50px rgba(0, 0, 0, 0.25)",
-      width: "100%",
-      maxWidth: "900px",
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      animation: "modalSlideIn 0.3s ease-out",
-      overflow: "hidden",
-    },
-  };
-
   if (success || error) {
     return (
-      <>
-        <div style={styles.overlay}>
-          <div>
-            {success ? (
-              <div>
-                <h3>Success</h3>
-                <p>{success}</p>
-                <button
-                  onClick={() => {
-                    setSuccess(null);
-                    onClose();
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-            ) : (
-              <div>
-                <h3>Error</h3>
-                <p>{error}</p>
-                <button onClick={() => setError(null)}>
-                  Try Again
-                </button>
-              </div>
-            )}
+      <div className={styles.modalOverlay}>
+        <div className={styles.statusModal}>
+          <div className={`${styles.statusIcon} ${success ? styles.success : styles.error}`}>
+            {success ? "✓" : "!"}
           </div>
+          <h3 className={styles.statusTitle}>{success ? "Success" : "Error"}</h3>
+          <p className={styles.statusMessage}>{success || error}</p>
+          <button
+            className={styles.statusButton}
+            onClick={() => {
+              if (success) {
+                setSuccess(null);
+                onClose();
+              } else {
+                setError(null);
+              }
+            }}
+          >
+            {success ? "Close" : "Try Again"}
+          </button>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <div style={styles.overlay} onClick={onClose}>
-        <div style={styles.container} onClick={(e) => e.stopPropagation()}>
-          <form onSubmit={handleSubmit}>
-            <input name="name" required />
-            <input name="mobile_no" required />
-            <select name="payment_method" required>
-              <option value="">Select payment method</option>
-              <option value="Cash">Cash</option>
-            </select>
-            <input type="number" name="total_amount" required />
-            <input type="date" name="donation_date" required />
-            <input name="purpose" required />
-            <textarea name="remarks" />
-            <button type="submit" disabled={loading}>
-              {loading ? "Processing..." : "Register Donor"}
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalContainer} onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className={styles.modalHeader}>
+          <h2>
+            <span>🤝</span> NEW DONOR REGISTRATION
+          </h2>
+          <button className={styles.closeButton} onClick={onClose}>×</button>
+        </div>
+
+        {/* Form Body */}
+        <div className={styles.modalBody}>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <div className={styles.formGrid}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>👤 Donor Name *</label>
+                <input
+                  name="name"
+                  placeholder="Full Name"
+                  required
+                  className={styles.input}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>📱 Mobile No *</label>
+                <input
+                  name="mobile_no"
+                  placeholder="0300-1234567"
+                  required
+                  className={styles.input}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>💳 Payment Method *</label>
+                <select
+                  name="payment_method"
+                  required
+                  className={styles.select}
+                  disabled={loading}
+                >
+                  <option value="">Select method</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Bank Transfer">Bank Transfer</option>
+                  <option value="EasyPaisa">EasyPaisa</option>
+                  <option value="JazzCash">JazzCash</option>
+                </select>
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>💰 Amount (PKR) *</label>
+                <input
+                  type="number"
+                  name="total_amount"
+                  placeholder="0.00"
+                  required
+                  className={styles.input}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>📅 Donation Date *</label>
+                <input
+                  type="date"
+                  name="donation_date"
+                  required
+                  defaultValue={new Date().toISOString().split("T")[0]}
+                  className={styles.input}
+                  disabled={loading}
+                />
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>🎯 Purpose *</label>
+                <input
+                  name="purpose"
+                  placeholder="Donation Purpose"
+                  required
+                  className={styles.input}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className={styles.fieldGroup}>
+              <label className={styles.label}>📝 Remarks (Optional)</label>
+              <textarea
+                name="remarks"
+                placeholder="Additional notes..."
+                className={styles.textarea}
+                disabled={loading}
+              />
+            </div>
+
+            <button type="submit" disabled={loading} className={styles.submitButton}>
+              {loading ? (
+                <>
+                  <span className={styles.spinner}></span>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <span>💾</span> Register Donor
+                </>
+              )}
             </button>
           </form>
         </div>
       </div>
-    </>
+    </div>
   );
 }
