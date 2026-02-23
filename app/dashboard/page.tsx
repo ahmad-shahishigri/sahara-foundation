@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
-  
+
   // State for all modals
   const [showDonorForm, setShowDonorForm] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
@@ -55,7 +55,7 @@ export default function DashboardPage() {
         console.log("Some components are not available yet");
       }
     }
-    
+
     checkComponents();
   }, []);
 
@@ -90,10 +90,10 @@ export default function DashboardPage() {
 
     try {
       donorsChannel = supabase
-        .channel('doners_changes')
+        .channel('doner_changes')
         .on(
           'postgres_changes',
-          { event: '*', schema: 'public', table: 'doners' },
+          { event: '*', schema: 'public', table: 'doner' },
           () => setRefreshKey(prev => prev + 1)
         )
         .subscribe();
@@ -120,12 +120,12 @@ export default function DashboardPage() {
   const handleSuccess = async () => {
     // Add a small delay to ensure database is synced
     await new Promise(resolve => setTimeout(resolve, 500));
-    
+
     // Close all modals
     setShowDonorForm(false);
     setShowExpenseForm(false);
     setShowLoanForm(false);
-    
+
     // Refresh the dashboard data
     setRefreshKey(prev => prev + 1);
   };
@@ -254,40 +254,40 @@ export default function DashboardPage() {
       {/* Header */}
       <div className={styles.header}>
         <h1 className={styles.title}>Sahara Foundation Dashboard <b>(Admin)</b></h1>
-        <p style={{textAlign:"center"}} >Real-time financial overview and management</p>
+        <p style={{ textAlign: "center" }} >Real-time financial overview and management</p>
       </div>
 
       {/* Main Stats Row */}
       <div className={styles.mainStatsRow}>
-        <StatCard 
-          title="Total Funds Received" 
+        <StatCard
+          title="Total Funds Received"
           amount={formatCurrency(totalFunds)}
           icon="💰"
           trend="positive"
           progress={100}
           description={`${totalDonors} donors • Avg ${formatCurrency(avgDonation)}`}
         />
-        
-        <StatCard 
-          title="Available Balance" 
+
+        <StatCard
+          title="Available Balance"
           amount={formatCurrency(availableBalance)}
           icon="💳"
           trend={availableBalance > 0 ? "positive" : "negative"}
           progress={availablePct}
           description={`${availablePct}% available of total funds`}
         />
-        
-        <StatCard 
-          title="Total Loans Given" 
+
+        <StatCard
+          title="Total Loans Given"
           amount={formatCurrency(totalLoans)}
           icon="📝"
           trend="neutral"
           progress={loansOutstandingPct}
           description={`${totalLoansCount} loans • ${loansOutstandingPct}% outstanding`}
         />
-        
-        <StatCard 
-          title="Total Expenses" 
+
+        <StatCard
+          title="Total Expenses"
           amount={formatCurrency(totalExpenses)}
           icon="💸"
           trend="expense"
@@ -298,8 +298,8 @@ export default function DashboardPage() {
 
       {/* Secondary Stats Row */}
       <div className={styles.secondaryStatsRow}>
-        <StatCard 
-          title="Active Loans" 
+        <StatCard
+          title="Active Loans"
           amount={formatCurrency(totalActiveLoans)}
           icon="🔄"
           trend="warning"
@@ -307,9 +307,9 @@ export default function DashboardPage() {
           description={`${formatCurrency(totalActiveLoans)} outstanding`}
           variant="secondary"
         />
-        
-        <StatCard 
-          title="Total Donors" 
+
+        <StatCard
+          title="Total Donors"
           amount={formatNumber(totalDonors)}
           icon="👥"
           trend="positive"
@@ -317,9 +317,9 @@ export default function DashboardPage() {
           description={`${totalDonors} active contributors • Avg ${formatCurrency(avgDonation)}`}
           variant="secondary"
         />
-        
-        <StatCard 
-          title="Loan Recovery Rate" 
+
+        <StatCard
+          title="Loan Recovery Rate"
           amount={`${recoveryPct}%`}
           icon="📊"
           trend="positive"
@@ -327,9 +327,9 @@ export default function DashboardPage() {
           description={`${formatCurrency(totalLoans - totalActiveLoans)} recovered of ${formatCurrency(totalLoans)}`}
           variant="secondary"
         />
-        
-        <StatCard 
-          title="Funds Utilization" 
+
+        <StatCard
+          title="Funds Utilization"
           amount={`${fundsUtilizationPct}%`}
           icon="⚡"
           trend="neutral"
@@ -340,7 +340,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Action Buttons */}
-      <ActionButtons 
+      <ActionButtons
         onAddDonor={() => setShowDonorForm(true)}
         onAddExpense={() => setShowExpenseForm(true)}
         onAddLoan={() => setShowLoanForm(true)}
@@ -352,20 +352,20 @@ export default function DashboardPage() {
       <div className={styles.activitySection}>
         <div className={styles.recentActivity}>
           <h3 className={styles.sectionTitle}>📋 Recent Activity</h3>
-          <RecentActivity 
+          <RecentActivity
             recentDonors={recentDonors}
             recentTransactions={recentTransactions}
           />
         </div>
-        
+
 
       </div>
 
       {/* MODALS */}
-      
+
       {/* Donor Form - This works */}
       {showDonorForm && (
-        <DonerForm 
+        <DonerForm
           onClose={() => setShowDonorForm(false)}
           onSuccess={handleSuccess}
           onOptimistic={applyOptimisticDonor}
@@ -375,7 +375,7 @@ export default function DashboardPage() {
 
       {/* Expense Form Modal */}
       {showExpenseForm && (
-        <ExpenseFormModal 
+        <ExpenseFormModal
           onClose={() => setShowExpenseForm(false)}
           onSuccess={handleSuccess}
           onOptimistic={applyOptimisticRecord}
@@ -383,9 +383,9 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Loan Form Modal */} 
+      {/* Loan Form Modal */}
       {showLoanForm && (
-        <LoanFormModal 
+        <LoanFormModal
           onClose={() => setShowLoanForm(false)}
           onSuccess={handleSuccess}
           onOptimistic={applyOptimisticRecord}

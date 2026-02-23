@@ -33,7 +33,14 @@ type ExpenseFormProps = {
   hideHeader?: boolean;
 };
 
-export default function ExpenseForm({ onClose, onSuccess, onOptimistic, onRollback, expenseType: initialType, hideHeader = false }: ExpenseFormProps = {}) {
+export default function ExpenseForm({
+  onClose = () => { },
+  onSuccess,
+  onOptimistic,
+  onRollback,
+  expenseType: initialType,
+  hideHeader = false
+}: ExpenseFormProps = {}) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +49,7 @@ export default function ExpenseForm({ onClose, onSuccess, onOptimistic, onRollba
   const categories = [
     "Food & Ration",
     "Medical",
-    "Education", 
+    "Education",
     "Utilities",
     "Transportation",
     "Clothing",
@@ -69,15 +76,6 @@ export default function ExpenseForm({ onClose, onSuccess, onOptimistic, onRollba
     "Agricultural",
     "Emergency",
     "Other"
-  ];
-
-  const repaymentTypes = [
-    "Monthly Installment",
-    "Weekly Installment",
-    "Bi-weekly Installment",
-    "Quarterly Installment",
-    "Yearly Installment",
-    "One-time Payment"
   ];
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -108,8 +106,8 @@ export default function ExpenseForm({ onClose, onSuccess, onOptimistic, onRollba
         interest_rate: parseFloat(formData.get("interest_rate") as string) || 0,
         installment_amount: parseFloat(formData.get("installment_amount") as string) || 0,
         total_installments: parseInt(formData.get("total_installments") as string) || 1,
-        remaining_amount: parseFloat(formData.get("remaining_amount") as string) || 
-                         parseFloat(formData.get("total_amount") as string),
+        remaining_amount: parseFloat(formData.get("remaining_amount") as string) ||
+          parseFloat(formData.get("total_amount") as string),
         collateral: formData.get("collateral") as string,
       };
     }
@@ -120,7 +118,6 @@ export default function ExpenseForm({ onClose, onSuccess, onOptimistic, onRollba
     const optimisticRecord = { ...data, id: tempId, created_at: new Date().toISOString(), __optimistic: true } as any;
 
     try {
-      // optimistic UI update
       if (onOptimistic) onOptimistic(optimisticRecord);
 
       const { error } = await supabase
@@ -129,590 +126,237 @@ export default function ExpenseForm({ onClose, onSuccess, onOptimistic, onRollba
 
       if (error) {
         console.error(error);
+        setError("Failed to save record. Please try again.");
         if (onRollback) onRollback(tempId);
       } else {
         setSuccess(
-          expenseType === "loan" 
+          expenseType === "loan"
             ? "Loan record has been successfully added!"
             : "Expense record has been successfully added!"
         );
-        
-        // Call onSuccess callback if provided with a slight delay for DB sync
+
         if (onSuccess) {
           setTimeout(() => {
             onSuccess();
-            if (onClose) onClose();
           }, 500);
         }
       }
     } catch (err) {
       console.error(err);
+      setError("An unexpected error occurred. Please try again.");
       if (onRollback) onRollback(tempId);
     } finally {
       setLoading(false);
     }
   }
 
-  return (
-    <>
-      <style jsx global>{`
-        @keyframes modalSlideIn {
-          from {
-            opacity: 0;
-            transform: translateY(-50px) scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-        
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
-
-      <div className={styles.formContainer}>
-        {/* Form Header - only show if hideHeader is false */}
-        {!hideHeader && (
-        <div style={{ 
-          textAlign: "center", 
-          padding: "1.5rem 2rem",
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-          color: "white"
-        }}>
-          <h2 style={{ 
-            fontSize: "1.8rem",
-            fontWeight: "700",
-            margin: "0 0 0.5rem 0",
-            letterSpacing: "0.5px",
-            textAlign: "center"
-          }}>
-            FOUNDATION FINANCE RECORD
-          </h2>
-          <p style={{ 
-            opacity: "0.9",
-            margin: "0",
-            fontSize: "0.95rem",
-            textAlign: "center"
-          }}>
-            Record all loans and expenses with complete details
-          </p>
+  if (success || error) {
+    return (
+      <div className={styles.modalOverlay}>
+        <div className={styles.statusModal}>
+          <div className={`${styles.statusIcon} ${success ? styles.success : styles.error}`}>
+            {success ? "✓" : "!"}
+          </div>
+          <h3 className={styles.statusTitle}>{success ? "Success" : "Error"}</h3>
+          <p className={styles.statusMessage}>{success || error}</p>
+          <button
+            className={styles.statusButton}
+            onClick={() => {
+              if (success) {
+                setSuccess(null);
+                onClose();
+              } else {
+                setError(null);
+              }
+            }}
+          >
+            {success ? "Close" : "Try Again"}
+          </button>
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.formContainer}>
+      {/* Dynamic Header */}
+      {!hideHeader && (
+        <div className={`${styles.formHeader} ${expenseType === 'loan' ? styles.loanHeader : styles.expenseHeader}`}>
+          <div className={styles.headerContent}>
+            <h2>{expenseType === "loan" ? "📝 LOAN RECORD" : "💰 EXPENSE RECORD"}</h2>
+            <p>{expenseType === "loan" ? "Record financing provided to recipients" : "Record foundation expenditures"}</p>
+          </div>
+          <button className={styles.closeButton} onClick={onClose}>×</button>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className={styles.form}>
+        {/* Type Selection - Hide if initialType is provided */}
+        {!initialType && (
+          <div className={styles.typeSelector}>
+            <button
+              type="button"
+              onClick={() => setExpenseType("expense")}
+              className={`${styles.typeButton} ${expenseType === "expense" ? styles.activeExpense : ""}`}
+            >
+              <span>💰</span> EXPENSE
+            </button>
+            <button
+              type="button"
+              onClick={() => setExpenseType("loan")}
+              className={`${styles.typeButton} ${expenseType === "loan" ? styles.activeLoan : ""}`}
+            >
+              <span>📝</span> LOAN
+            </button>
+          </div>
         )}
 
-        <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Type Selection */}
-<div
-  style={{
-    background: "#f8f9fa",
-    borderRadius: "16px",
-    padding: "2rem",
-    marginBottom: "2rem",
-    border: "1px solid #e9ecef",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.05)",
-  }}
->
-  <div
-    style={{
-      display: "flex",
-      gap: "1.5rem",
-      flexWrap: "wrap",
-      justifyContent: "center",
-      marginBottom: "1.5rem",
-    }}
-  >
-    {/* EXPENSE BUTTON */}
-    <button
-      type="button"
-      onClick={() => setExpenseType("expense")}
-      style={{
-        flex: "1",
-        minWidth: "100px",
-        padding: "1.5rem 2rem",
-        background: expenseType === "expense" ? "linear-gradient(135deg, #ff922b, #fd7e14)" : "white",
-        color: expenseType === "expense" ? "white" : "#333",
-        borderWidth: "2px",
-        borderStyle: "solid",
-        borderColor: expenseType === "expense" ? "#ff922b" : "#e9ecef",
-        borderRadius: "14px",
-        fontSize: "1.2rem",
-        fontWeight: "600",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "1rem",
-        transition: "all 0.3s ease",
-        boxShadow: expenseType === "expense" ? "0 8px 20px rgba(255, 146, 43, 0.3)" : "0 4px 10px rgba(0, 0, 0, 0.05)",
-      }}
-      onMouseEnter={(e) => {
-        if (expenseType !== "expense") {
-          e.currentTarget.style.borderColor = "#ff922b";
-          e.currentTarget.style.transform = "translateY(-4px)";
-          e.currentTarget.style.boxShadow = "0 12px 24px rgba(255, 146, 43, 0.2)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (expenseType !== "expense") {
-          e.currentTarget.style.borderColor = "#e9ecef";
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.05)";
-        }
-      }}
-    >
-      <span style={{ fontSize: "2.2rem" }}>💰</span>
-      EXPENSE RECORD
-    </button>
-
-    {/* LOAN BUTTON */}
-    <button
-      type="button"
-      onClick={() => setExpenseType("loan")}
-      style={{
-        flex: "1",
-        minWidth: "100px",
-        padding: "1.5rem 2rem",
-        background: expenseType === "loan" ? "linear-gradient(135deg, #ff922b, #fd7e14)" : "white",
-        color: expenseType === "loan" ? "white" : "#333",
-        borderWidth: "2px",
-        borderStyle: "solid",
-        borderColor: expenseType === "loan" ? "#ff922b" : "#e9ecef",
-        borderRadius: "14px",
-        fontSize: "1.2rem",
-        fontWeight: "600",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: "1rem",
-        transition: "all 0.3s ease",
-        boxShadow: expenseType === "loan" ? "0 8px 20px rgba(255, 146, 43, 0.3)" : "0 4px 10px rgba(0, 0, 0, 0.05)",
-      }}
-      onMouseEnter={(e) => {
-        if (expenseType !== "loan") {
-          e.currentTarget.style.borderColor = "#ff922b";
-          e.currentTarget.style.transform = "translateY(-4px)";
-          e.currentTarget.style.boxShadow = "0 12px 24px rgba(255, 146, 43, 0.2)";
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (expenseType !== "loan") {
-          e.currentTarget.style.borderColor = "#e9ecef";
-          e.currentTarget.style.transform = "translateY(0)";
-          e.currentTarget.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.05)";
-        }
-      }}
-    >
-      <span style={{ fontSize: "2.2rem" }}>📝</span>
-      LOAN RECORD
-    </button>
-  </div>
-
-  {/* Indicator Text */}
-  <div
-    style={{
-      textAlign: "center",
-      fontSize: "1.1rem",
-      color: "#555",
-      fontWeight: "500",
-    }}
-  >
-    Currently recording:{" "}
-    <strong style={{ color: "#ff922b", textTransform: "uppercase" }}>
-      {expenseType === "loan" ? "LOAN" : "EXPENSE"}
-    </strong>
-  </div>
-</div>
-
-          {/* Form Grid - Common Fields */}
-          <div className={styles.formGrid}>
-            {/* Recipient Name */}
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>
-                <span className={styles.labelIcon}>👤</span>
-                {expenseType === "loan" ? "BORROWER NAME *" : "RECIPIENT NAME *"}
-              </label>
-              <input
-                type="text"
-                name="recipient_name"
-                placeholder={expenseType === "loan" ? "Enter borrower's full name" : "Enter recipient's full name"}
-                required
-                className={styles.input}
-                disabled={loading}
-              />
-            </div>
-
-            {/* Contact Number */}
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>
-                <span className={styles.labelIcon}>📱</span>
-                CONTACT NUMBER
-              </label>
-              <input
-                type="tel"
-                name="mobile_no"
-                placeholder="0300-1234567"
-                className={styles.input}
-                disabled={loading}
-              />
-            </div>
-
-            {/* Category */}
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>
-                <span className={styles.labelIcon}>🏷️</span>
-                {expenseType === "loan" ? "LOAN TYPE *" : "CATEGORY *"}
-              </label>
-              <select
-                name="category"
-                required
-                className={styles.select}
-                disabled={loading}
-              >
-                <option value="">Select {expenseType === "loan" ? "loan type" : "category"}</option>
-                {(expenseType === "loan" ? loanTypes : categories).map((item) => (
-                  <option key={item} value={item}>
-                    {item}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Payment Method */}
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>
-                <span className={styles.labelIcon}>💳</span>
-                PAYMENT METHOD *
-              </label>
-              <select
-                name="payment_method"
-                required
-                className={styles.select}
-                disabled={loading}
-              >
-                <option value="">Select method</option>
-                {paymentMethods.map((method) => (
-                  <option key={method} value={method}>
-                    {method}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Total Amount */}
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>
-                <span className={styles.labelIcon}>💰</span>
-                {expenseType === "loan" ? "LOAN AMOUNT (PKR) *" : "AMOUNT (PKR) *"}
-              </label>
-              <div className={styles.amountWrapper}>
-                <span className={styles.currencySymbol}>₨</span>
-                <input
-                  type="number"
-                  name="total_amount"
-                  placeholder="0.00"
-                  required
-                  min="0"
-                  step="0.01"
-                  className={`${styles.input} ${styles.amountInput}`}
-                  disabled={loading}
-                  onChange={(e) => {
-                    if (expenseType === "loan") {
-                      const remainingInput = document.querySelector('input[name="remaining_amount"]') as HTMLInputElement;
-                      if (remainingInput) {
-                        remainingInput.value = e.target.value;
-                      }
-                    }
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Expense Date */}
-            <div className={styles.fieldGroup}>
-              <label className={styles.label}>
-                <span className={styles.labelIcon}>📅</span>
-                {expenseType === "loan" ? "DISBURSEMENT DATE *" : "EXPENSE DATE *"}
-              </label>
-              <input
-                type="date"
-                name="expense_date"
-                required
-                defaultValue={new Date().toISOString().split("T")[0]}
-                className={styles.input}
-                disabled={loading}
-              />
-            </div>
-          </div>
-
-          {/* Loan Specific Fields */}
-          {expenseType === "loan" && (
-            <div className={styles.loanSection}>
-              <div className={styles.sectionHeader}>
-                <span className={styles.sectionIcon}>📋</span>
-                LOAN DETAILS
-              </div>
-              {expenseType === "loan" && (
-  <div className={styles.fieldGroup}>
-    <label className={styles.label}>
-      <span className={styles.labelIcon}>📊</span>
-      LOAN STATUS *
-    </label>
-    <select
-      name="loan_status"
-      required
-      className={styles.select}
-      disabled={loading}
-      defaultValue="active"
-    >
-      <option value="active">🟢 Active (Ongoing)</option>
-      <option value="completed">🔵 Completed (Paid in Full)</option>
-      <option value="pending">🟡 Pending (Not Started)</option>
-      <option value="defaulted">🔴 Defaulted (Not Paying)</option>
-    </select>
-  </div>
-)}
-              <div className={styles.formGrid}>
-                {/* Loan Type (Installment/One-time) */}
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>
-                    <span className={styles.labelIcon}>🔄</span>
-                    REPAYMENT TYPE *
-                  </label>
-                  <select
-                    name="loan_type"
-                    required
-                    className={styles.select}
-                    disabled={loading}
-                    onChange={(e) => {
-                      const installmentFields = document.querySelectorAll('.installment-field');
-                      installmentFields.forEach(field => {
-                        if (e.target.value === 'one_time') {
-                          (field as HTMLElement).style.opacity = '0.5';
-                          (field as HTMLElement).style.pointerEvents = 'none';
-                        } else {
-                          (field as HTMLElement).style.opacity = '1';
-                          (field as HTMLElement).style.pointerEvents = 'all';
-                        }
-                      });
-                    }}
-                  >
-                    <option value="">Select repayment type</option>
-                    <option value="installment">Installment Based</option>
-                    <option value="one_time">One-time Payment</option>
-                  </select>
-                </div>
-
-                {/* Return Date */}
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>
-                    <span className={styles.labelIcon}>⏰</span>
-                    EXPECTED RETURN DATE *
-                  </label>
-                  <input
-                    type="date"
-                    name="return_date"
-                    required
-                    className={styles.input}
-                    disabled={loading}
-                    min={new Date().toISOString().split("T")[0]}
-                  />
-                  
-                </div>
-
-                {/* Interest Rate */}
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>
-                    <span className={styles.labelIcon}>📈</span>
-                    INTEREST RATE (%)
-                  </label>
-                  <div className={styles.percentageWrapper}>
-                    <input
-                      type="number"
-                      name="interest_rate"
-                      placeholder="0"
-                      min="0"
-                      max="100"
-                      step="0.01"
-                      className={`${styles.input} ${styles.percentageInput}`}
-                      disabled={loading}
-                    />
-                    <span className={styles.percentageSymbol}>%</span>
-                  </div>
-                </div>
-
-                {/* Installment Amount */}
-                <div className={`${styles.fieldGroup} installment-field`}>
-                  <label className={styles.label}>
-                    <span className={styles.labelIcon}>💵</span>
-                    INSTALLMENT AMOUNT
-                  </label>
-                  <div className={styles.amountWrapper}>
-                    <span className={styles.currencySymbol}>₨</span>
-                    <input
-                      type="number"
-                      name="installment_amount"
-                      placeholder="0.00"
-                      min="0"
-                      step="0.01"
-                      className={`${styles.input} ${styles.amountInput}`}
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-
-                {/* Total Installments */}
-                <div className={`${styles.fieldGroup} installment-field`}>
-                  <label className={styles.label}>
-                    <span className={styles.labelIcon}>🔢</span>
-                    TOTAL INSTALLMENTS
-                  </label>
-                  <input
-                    type="number"
-                    name="total_installments"
-                    placeholder="1"
-                    min="1"
-                    className={styles.input}
-                    disabled={loading}
-                  />
-                </div>
-
-                {/* Remaining Amount */}
-                <div className={styles.fieldGroup}>
-                  <label className={styles.label}>
-                    <span className={styles.labelIcon}>📊</span>
-                    REMAINING AMOUNT *
-                  </label>
-                  <div className={styles.amountWrapper}>
-                    <span className={styles.currencySymbol}>₨</span>
-                    <input
-                      type="number"
-                      name="remaining_amount"
-                      placeholder="0.00"
-                      required
-                      min="0"
-                      step="0.01"
-                      className={`${styles.input} ${styles.amountInput}`}
-                      disabled={loading}
-                    />
-                  </div>
-                </div>
-
-                {/* Collateral */}
-                <div className={styles.fieldGroup} style={{ gridColumn: "span 2" }}>
-                  <label className={styles.label}>
-                    <span className={styles.labelIcon}>🏠</span>
-                    COLLATERAL / GUARANTEE
-                  </label>
-                  <input
-                    type="text"
-                    name="collateral"
-                    placeholder="Describe collateral (if any)"
-                    className={styles.input}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Purpose */}
+        <div className={styles.formGrid}>
+          {/* Recipient Name */}
           <div className={styles.fieldGroup}>
-            <label className={styles.label}>
-              <span className={styles.labelIcon}>🎯</span>
-              {expenseType === "loan" ? "LOAN PURPOSE *" : "PURPOSE / DESCRIPTION *"}
-            </label>
+            <label className={styles.label}>👤 {expenseType === "loan" ? "Borrower Name *" : "Recipient Name *"}</label>
             <input
-              type="text"
-              name="purpose"
-              placeholder={expenseType === "loan" 
-                ? "Describe the purpose of this loan" 
-                : "Describe the purpose of this expense"}
+              name="recipient_name"
+              placeholder="Full Name"
               required
               className={styles.input}
               disabled={loading}
             />
           </div>
 
-          {/* Remarks */}
+          {/* Contact Number */}
           <div className={styles.fieldGroup}>
-            <label className={styles.label}>
-              <span className={styles.labelIcon}>📝</span>
-              REMARKS (OPTIONAL)
-            </label>
-            <textarea
-              name="remarks"
-              placeholder="Add any additional notes, receipt details, or special instructions..."
-              rows={3}
-              className={styles.textarea}
+            <label className={styles.label}>📱 Contact Number</label>
+            <input
+              name="mobile_no"
+              placeholder="0300-1234567"
+              className={styles.input}
               disabled={loading}
             />
           </div>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
+          {/* Category */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>🏷️ {expenseType === "loan" ? "Loan Type *" : "Category *"}</label>
+            <select name="category" required className={styles.select} disabled={loading}>
+              <option value="">Select option</option>
+              {(expenseType === "loan" ? loanTypes : categories).map((item) => (
+                <option key={item} value={item}>{item}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Payment Method */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>💳 Payment Method *</label>
+            <select name="payment_method" required className={styles.select} disabled={loading}>
+              <option value="">Select method</option>
+              {paymentMethods.map((method) => (
+                <option key={method} value={method}>{method}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Total Amount */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>💰 {expenseType === "loan" ? "Loan Amount (PKR) *" : "Amount (PKR) *"}</label>
+            <input
+              type="number"
+              name="total_amount"
+              placeholder="0.00"
+              required
+              className={styles.input}
+              disabled={loading}
+            />
+          </div>
+
+          {/* Date */}
+          <div className={styles.fieldGroup}>
+            <label className={styles.label}>📅 Date *</label>
+            <input
+              type="date"
+              name="expense_date"
+              required
+              defaultValue={new Date().toISOString().split("T")[0]}
+              className={styles.input}
+              disabled={loading}
+            />
+          </div>
+        </div>
+
+        {/* Loan Specific Fields */}
+        {expenseType === "loan" && (
+          <div className={styles.loanSection}>
+            <div className={styles.sectionDivider}>
+              <span>📋 LOAN DETAILS</span>
+            </div>
+            <div className={styles.formGrid}>
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>🔄 Repayment Type *</label>
+                <select name="loan_type" required className={styles.select} disabled={loading}>
+                  <option value="installment">Installment Based</option>
+                  <option value="one_time">One-time Payment</option>
+                </select>
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>⏰ Expected Return Date *</label>
+                <input type="date" name="return_date" required className={styles.input} disabled={loading} />
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>📈 Interest Rate (%)</label>
+                <input type="number" name="interest_rate" placeholder="0" className={styles.input} disabled={loading} />
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>🔢 Total Installments</label>
+                <input type="number" name="total_installments" placeholder="1" className={styles.input} disabled={loading} />
+              </div>
+
+              <div className={styles.fieldGroup}>
+                <label className={styles.label}>📊 Remaining Amount (PKR) *</label>
+                <input type="number" name="remaining_amount" placeholder="0.00" required className={styles.input} disabled={loading} />
+              </div>
+
+              <div className={styles.fieldGroup} style={{ gridColumn: "span 2" }}>
+                <label className={styles.label}>🏠 Collateral / Guarantee</label>
+                <input name="collateral" placeholder="Describe collateral" className={styles.input} disabled={loading} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Purpose */}
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>🎯 Purpose / Description *</label>
+          <input name="purpose" required placeholder="Description of this record" className={styles.input} disabled={loading} />
+        </div>
+
+        {/* Remarks */}
+        <div className={styles.fieldGroup}>
+          <label className={styles.label}>📝 Remarks (Optional)</label>
+          <textarea
+            name="remarks"
+            placeholder="Add any additional notes..."
+            className={styles.textarea}
             disabled={loading}
-            className={`${styles.submitButton} ${loading ? styles.loading : ""} ${expenseType === "loan" ? styles.loanButton : styles.expenseButton}`}
-          >
-            {loading ? (
-              <>
-                <span className={styles.spinner}></span>
-                PROCESSING...
-              </>
-            ) : (
-              <>
-                <span className={styles.buttonIcon}>
-                  {expenseType === "loan" ? "📝" : "💾"}
-                </span>
-                {expenseType === "loan" ? "SAVE LOAN RECORD" : "SAVE EXPENSE RECORD"}
-              </>
-            )}
-          </button>
-        </form>
+          />
+        </div>
 
-        {/* Success Modal */}
-        {success && (
-          <div className={styles.modalOverlay}>
-            <div className={styles.modal}>
-              <div className={`${styles.modalIcon} ${expenseType === "loan" ? styles.loanSuccess : styles.success}`}>
-                <span>{expenseType === "loan" ? "📝" : "✓"}</span>
-              </div>
-              <h3 className={styles.modalTitle}>
-                {expenseType === "loan" ? "Loan Recorded!" : "Success!"}
-              </h3>
-              <p className={styles.modalMessage}>{success}</p>
-              <button
-                onClick={() => setSuccess(null)}
-                className={`${styles.modalButton} ${expenseType === "loan" ? styles.loanModalButton : ""}`}
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Error Modal */}
-        {error && (
-          <div className={styles.modalOverlay}>
-            <div className={styles.modal}>
-              <div className={`${styles.modalIcon} ${styles.error}`}>
-                <span>✗</span>
-              </div>
-              <h3 className={styles.modalTitle}>Error!</h3>
-              <p className={styles.modalMessage}>{error}</p>
-              <button
-                onClick={() => setError(null)}
-                className={styles.modalButton}
-              >
-                TRY AGAIN
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </>
+        <button type="submit" disabled={loading} className={`${styles.submitButton} ${expenseType === 'loan' ? styles.loanBtn : styles.expenseBtn}`}>
+          {loading ? (
+            <>
+              <span className={styles.spinner}></span>
+              Processing...
+            </>
+          ) : (
+            <>
+              <span>💾</span> Save {expenseType === "loan" ? "Loan" : "Expense"} Record
+            </>
+          )}
+        </button>
+      </form>
+    </div>
   );
 }

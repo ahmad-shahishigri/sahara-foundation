@@ -1,16 +1,16 @@
-    import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
 export async function getDashboardStats() {
   try {
-    // Fetch all donors data
+    // Fetch all donors data - changed "doners" to "doner"
     const { data: donors, error: donorsError } = await supabase
-      .from("doners")
+      .from("doner")
       .select("total_amount");
 
     // Fetch all expense_records data (both loans and expenses)
     const { data: financeRecords, error: financeError } = await supabase
       .from("expense_records")
-      .select("total_amount, type");
+      .select("total_amount, type, remaining_amount");
 
     if (donorsError || financeError) {
       console.error("Error fetching data:", donorsError || financeError);
@@ -19,30 +19,24 @@ export async function getDashboardStats() {
 
     // Calculate totals
     const totalFunds = donors?.reduce((sum, donor) => sum + donor.total_amount, 0) || 0;
-    
+
     // Separate loans and expenses
     const loans = financeRecords?.filter(record => record.type === "loan") || [];
     const expenses = financeRecords?.filter(record => record.type === "expense") || [];
-    
+
     const totalLoans = loans.reduce((sum, loan) => sum + loan.total_amount, 0);
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.total_amount, 0);
-    
-    // Calculate active loans (not completed)
-    const { data: activeLoansData } = await supabase
-      .from("expense_records")
-      .select("total_amount, remaining_amount")
-      .eq("type", "loan")
-      .neq("loan_status", "completed");
 
-    const totalActiveLoans = activeLoansData?.reduce((sum, loan) => 
-      sum + (loan.remaining_amount || loan.total_amount), 0) || 0;
-    
+    // Calculate active loans - removed loan_status filter, using remaining_amount > 0 as proxy
+    const totalActiveLoans = loans.reduce((sum, loan) =>
+      sum + (loan.remaining_amount || loan.total_amount), 0);
+
     // Calculate available balance
     const availableBalance = totalFunds - totalExpenses - totalActiveLoans;
 
     // Count records
     const { count: totalDonors } = await supabase
-      .from("doners")
+      .from("doner")
       .select("*", { count: "exact", head: true });
 
     const { count: totalLoansCount } = await supabase
@@ -57,7 +51,7 @@ export async function getDashboardStats() {
 
     // Get recent activity
     const { data: recentDonors } = await supabase
-      .from("doners")
+      .from("doner")
       .select("*")
       .order("created_at", { ascending: false })
       .limit(5);

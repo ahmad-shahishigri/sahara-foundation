@@ -48,7 +48,7 @@ export default function ExpenseFormModal({ onClose, onSuccess, onOptimistic, onR
             justifyContent: "space-between",
             alignItems: "center",
             padding: "1.5rem 2rem",
-            background: "linear-gradient(135deg, #4c6ef5, #3b5bdb)",
+            background: "linear-gradient(135deg, #ff922b, #fd7e14)",
             color: "white",
             flexShrink: 0,
           }}

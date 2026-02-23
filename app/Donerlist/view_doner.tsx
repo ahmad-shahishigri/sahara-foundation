@@ -68,18 +68,9 @@ export default function ViewDoner({ isModal = false, onClose, refreshKey }: View
         .channel("view_doner_realtime")
         .on(
           "postgres_changes",
-          { event: "*", schema: "public", table: "doners" },
+          { event: "*", schema: "public", table: "doner" },
           () => {
             fetchDoners();
-          }
-        )
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "transactions" },
-          () => {
-            // if donations detail view is open, refresh those too
-            if (selectedMobile) fetchAllDonationsForMobile(selectedMobile);
-            else fetchDoners();
           }
         )
         .subscribe();
@@ -110,7 +101,7 @@ export default function ViewDoner({ isModal = false, onClose, refreshKey }: View
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from("doners")
+        .from("doner")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -128,10 +119,10 @@ export default function ViewDoner({ isModal = false, onClose, refreshKey }: View
     try {
       setSearchLoading(true);
       setSelectedMobile(mobile_no);
-      
-      // 1. Find ALL donor records with this EXACT mobile number
+
+      // Fetch all records from 'doner' table with this mobile number
       const { data: donerRecords, error: donersError } = await supabase
-        .from("doners")
+        .from("doner")
         .select("*")
         .eq("mobile_no", mobile_no)
         .order("donation_date", { ascending: false });
@@ -143,19 +134,7 @@ export default function ViewDoner({ isModal = false, onClose, refreshKey }: View
         return;
       }
 
-      // 2. Get all donor IDs for this mobile number
-      const donerIds = donerRecords.map(d => d.id);
-      
-      // 3. Fetch all transactions for all these donor IDs
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from("transactions")
-        .select("*")
-        .in("doner_id", donerIds)
-        .order("transaction_date", { ascending: false });
-
-      if (transactionsError) throw transactionsError;
-
-      // 4. Convert donor records to donation format
+      // Convert donor records to donation format
       const mainDonations: DonationRecord[] = donerRecords.map((doner) => ({
         id: doner.id,
         date: doner.donation_date,
@@ -169,29 +148,7 @@ export default function ViewDoner({ isModal = false, onClose, refreshKey }: View
         mobile_no: doner.mobile_no,
       }));
 
-      // 5. Convert transactions to donation format
-      const transactionDonations: DonationRecord[] = (transactionsData || []).map((transaction) => {
-        // Find which donor this transaction belongs to
-        const donor = donerRecords.find(d => d.id === transaction.doner_id);
-        return {
-          id: transaction.id,
-          date: transaction.transaction_date,
-          amount: transaction.amount,
-          payment_method: transaction.payment_method,
-          purpose: transaction.purpose,
-          remarks: transaction.remarks,
-          is_main_record: false,
-          doner_id: transaction.doner_id,
-          doner_name: donor?.name || "Unknown",
-          mobile_no: donor?.mobile_no || mobile_no,
-        };
-      });
-
-      // 6. Combine and sort by date (newest first)
-      const allDonationsData = [...mainDonations, ...transactionDonations];
-      allDonationsData.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      
-      setAllDonations(allDonationsData);
+      setAllDonations(mainDonations);
     } catch (error) {
       console.error("Error fetching donations:", error);
       setAllDonations([]);
@@ -208,7 +165,7 @@ export default function ViewDoner({ isModal = false, onClose, refreshKey }: View
   // Group donors by MOBILE NUMBER only
   const groupedByMobile = filteredDoners.reduce((groups, doner) => {
     const mobileKey = doner.mobile_no.trim();
-    
+
     if (!groups[mobileKey]) {
       groups[mobileKey] = {
         mobile_no: doner.mobile_no,
@@ -219,18 +176,18 @@ export default function ViewDoner({ isModal = false, onClose, refreshKey }: View
         count: 0,
       };
     }
-    
+
     groups[mobileKey].records.push(doner);
     groups[mobileKey].totalAmount += doner.total_amount;
     groups[mobileKey].count += 1;
     groups[mobileKey].uniqueNames.add(doner.name);
-    
+
     // Find the most recent donation date
     const currentDate = new Date(doner.donation_date);
     if (!groups[mobileKey].lastDonation || currentDate > new Date(groups[mobileKey].lastDonation)) {
       groups[mobileKey].lastDonation = doner.donation_date;
     }
-    
+
     return groups;
   }, {} as Record<string, {
     mobile_no: string;
@@ -276,7 +233,7 @@ export default function ViewDoner({ isModal = false, onClose, refreshKey }: View
   const averageDonation = totalTransactions > 0 ? totalAmount / totalTransactions : 0;
 
   // Get unique names for selected mobile
-  const selectedUniqueNames = selectedMobile 
+  const selectedUniqueNames = selectedMobile
     ? Array.from(new Set(allDonations.filter(d => d.is_main_record).map(d => d.doner_name)))
     : [];
 
@@ -585,378 +542,378 @@ export default function ViewDoner({ isModal = false, onClose, refreshKey }: View
         </p>
       </div>
 
-        {/* Main Card */}
-        <div style={styles.card}>
-          {/* Search Section */}
-          <div style={styles.searchSection}>
-            <div style={styles.searchContainer}>
-              <label style={styles.searchLabel}>
-                🔍 SEARCH BY NAME OR MOBILE NUMBER
-              </label>
-              <input
-                type="text"
-                placeholder="Enter name or mobile number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={styles.searchInput}
-                onFocus={(e) => Object.assign(e.target.style, styles.searchInputFocus)}
-                onBlur={(e) => {
-                  e.target.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
-                }}
-              />
-              <div style={styles.searchHint}>
-                {/* <span>💡 Tip: Groups records by exact mobile number</span> */}
-              </div>
+      {/* Main Card */}
+      <div style={styles.card}>
+        {/* Search Section */}
+        <div style={styles.searchSection}>
+          <div style={styles.searchContainer}>
+            <label style={styles.searchLabel}>
+              🔍 SEARCH BY NAME OR MOBILE NUMBER
+            </label>
+            <input
+              type="text"
+              placeholder="Enter name or mobile number..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={styles.searchInput}
+              onFocus={(e) => Object.assign(e.target.style, styles.searchInputFocus)}
+              onBlur={(e) => {
+                e.target.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+              }}
+            />
+            <div style={styles.searchHint}>
+              {/* <span>💡 Tip: Groups records by exact mobile number</span> */}
             </div>
           </div>
+        </div>
 
-          {/* Main Content */}
-          <div style={styles.mainContent}>
-            {/* View Controls */}
-            <div style={styles.viewControls}>
+        {/* Main Content */}
+        <div style={styles.mainContent}>
+          {/* View Controls */}
+          <div style={styles.viewControls}>
+            <button
+              style={{
+                ...styles.viewButton,
+                ...(viewMode === "list" ? styles.viewButtonActive : styles.viewButtonInactive),
+              }}
+              onClick={() => setViewMode("list")}
+            >
+              📋 Grouped by Mobile
+            </button>
+            {selectedMobile && viewMode === "donations" && (
               <button
                 style={{
                   ...styles.viewButton,
-                  ...(viewMode === "list" ? styles.viewButtonActive : styles.viewButtonInactive),
+                  ...styles.viewButtonInactive,
                 }}
-                onClick={() => setViewMode("list")}
+                disabled
               >
-                📋 Grouped by Mobile
+                💰 All Records for {selectedMobile}
               </button>
-              {selectedMobile && viewMode === "donations" && (
-                <button
-                  style={{
-                    ...styles.viewButton,
-                    ...styles.viewButtonInactive,
-                  }}
-                  disabled
-                >
-                  💰 All Records for {selectedMobile}
-                </button>
+            )}
+          </div>
+
+          {/* Back Button (when viewing donations) */}
+          {viewMode === "donations" && selectedMobile && (
+            <button
+              style={styles.backButton}
+              onClick={() => {
+                setViewMode("list");
+                setSelectedMobile(null);
+                setAllDonations([]);
+              }}
+              onMouseEnter={(e) => Object.assign(e.currentTarget.style, styles.backButtonHover)}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#95a5a6";
+              }}
+            >
+              ← Back to Mobile Groups
+            </button>
+          )}
+
+          {/* Mobile Info Card (when viewing donations) */}
+          {viewMode === "donations" && selectedMobile && (
+            <div style={styles.donerInfoCard}>
+              <div style={styles.donerInfoGrid}>
+                <div style={styles.donerInfoItem}>
+                  <div style={styles.donerInfoLabel}>MOBILE NUMBER</div>
+                  <div style={styles.donerInfoValue}>
+                    {selectedMobile}
+                    <span style={styles.countBadge}>
+                      {allDonations.filter(d => d.is_main_record).length} records
+                    </span>
+                  </div>
+                </div>
+                <div style={styles.donerInfoItem}>
+                  <div style={styles.donerInfoLabel}>ASSOCIATED NAMES</div>
+                  <div style={styles.donerInfoValue}>
+                    {selectedUniqueNames.join(", ")}
+                    {selectedUniqueNames.length > 1 && (
+                      <span style={styles.nameBadge}>
+                        {selectedUniqueNames.length} names
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div style={styles.donerInfoItem}>
+                  <div style={styles.donerInfoLabel}>TOTAL DONATED</div>
+                  <div style={styles.donerInfoValue}>{formatCurrency(totalAmount)}</div>
+                </div>
+                <div style={styles.donerInfoItem}>
+                  <div style={styles.donerInfoLabel}>LAST DONATION</div>
+                  <div style={styles.donerInfoValue}>
+                    {allDonations.length > 0 ? formatDate(allDonations[0].date) : "N/A"}
+                  </div>
+                </div>
+              </div>
+              <div style={styles.statsCard}>
+                <div style={styles.statsGrid}>
+                  <div style={styles.statItem}>
+                    <div style={styles.statValue}>
+                      {allDonations.filter(d => d.is_main_record).length}
+                    </div>
+                    <div style={styles.statLabel}>Total Records</div>
+                  </div>
+                  <div style={styles.statItem}>
+                    <div style={styles.statValue}>{totalTransactions}</div>
+                    <div style={styles.statLabel}>Total Donations</div>
+                  </div>
+                  <div style={styles.statItem}>
+                    <div style={styles.statValue}>
+                      {formatCurrency(totalAmount)}
+                    </div>
+                    <div style={styles.statLabel}>Total Amount</div>
+                  </div>
+                  <div style={styles.statItem}>
+                    <div style={styles.statValue}>
+                      {formatCurrency(averageDonation)}
+                    </div>
+                    <div style={styles.statLabel}>Average Donation</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {loading && viewMode === "list" && (
+            <div style={styles.loadingContainer}>
+              <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>⏳</div>
+              <p>Loading donor records...</p>
+            </div>
+          )}
+
+          {searchLoading && viewMode === "donations" && (
+            <div style={styles.loadingContainer}>
+              <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🔍</div>
+              <p>Loading complete donation history...</p>
+            </div>
+          )}
+
+          {/* Grouped by Mobile List */}
+          {!loading && viewMode === "list" && (
+            <div style={styles.tableContainer}>
+              {groupedByMobileArray.length > 0 ? (
+                <table style={styles.table}>
+                  <thead style={styles.tableHeader}>
+                    <tr>
+                      <th style={styles.tableHeaderCell}>Mobile Number</th>
+                      <th style={styles.tableHeaderCell}>Associated Names</th>
+                      <th style={styles.tableHeaderCell}>Total Amount</th>
+                      <th style={styles.tableHeaderCell}>Total Records</th>
+                      <th style={styles.tableHeaderCell}>Last Donation</th>
+                      <th style={styles.tableHeaderCell}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {groupedByMobileArray.map((group, index) => (
+                      <tr
+                        key={`${group.mobile_no}_${index}`}
+                        style={styles.tableRow}
+                        onMouseEnter={(e) => Object.assign(e.currentTarget.style, styles.tableRowHover)}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "";
+                        }}
+                      >
+                        <td style={styles.tableCell}>
+                          <div style={{ fontWeight: "600", color: "#2c3e50" }}>
+                            {group.mobile_no}
+                            <span style={styles.mobileBadge}>
+                              {group.count} {group.count === 1 ? 'record' : 'records'}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={styles.tableCell}>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
+                            {Array.from(group.uniqueNames).map((name, idx) => (
+                              <span
+                                key={idx}
+                                style={{
+                                  display: "inline-block",
+                                  padding: "0.25rem 0.5rem",
+                                  borderRadius: "4px",
+                                  background: "#e9ecef",
+                                  color: "#495057",
+                                  fontSize: "0.8rem",
+                                }}
+                              >
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td style={{ ...styles.tableCell, ...styles.amountCell }}>
+                          {formatCurrency(group.totalAmount)}
+                        </td>
+                        <td style={styles.tableCell}>
+                          <span
+                            style={{
+                              display: "inline-block",
+                              padding: "0.25rem 0.5rem",
+                              borderRadius: "50%",
+                              background: group.count > 1 ? "#f8d7da" : "#d4edda",
+                              color: group.count > 1 ? "#721c24" : "#155724",
+                              fontSize: "0.85rem",
+                              fontWeight: "600",
+                              width: "24px",
+                              height: "24px",
+                              textAlign: "center",
+                              lineHeight: "24px",
+                            }}
+                          >
+                            {group.count}
+                          </span>
+                          {group.count > 1 && (
+                            <span style={{ marginLeft: "0.5rem", fontSize: "0.85rem", color: "#6c757d" }}>
+                              records
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ ...styles.tableCell, ...styles.dateCell }}>
+                          {formatDate(group.lastDonation)}
+                        </td>
+                        <td style={styles.tableCell}>
+                          <button
+                            onClick={() => handleMobileSelect(group.mobile_no)}
+                            style={{
+                              padding: "0.6rem 1.2rem",
+                              background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "8px",
+                              fontSize: "0.85rem",
+                              fontWeight: "600",
+                              cursor: "pointer",
+                              transition: "all 0.3s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.transform = "translateY(-3px)";
+                              e.currentTarget.style.boxShadow = "0 6px 12px rgba(102, 126, 234, 0.4)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.transform = "translateY(0)";
+                              e.currentTarget.style.boxShadow = "none";
+                            }}
+                          >
+                            View All Records
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div style={styles.noData}>
+                  <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📭</div>
+                  <p>No donors found</p>
+                  <p style={{ fontSize: "0.9rem", marginTop: "0.5rem", color: "#95a5a6" }}>
+                    {searchTerm ? "Try a different search term" : "No donor records available"}
+                  </p>
+                </div>
               )}
             </div>
+          )}
 
-            {/* Back Button (when viewing donations) */}
-            {viewMode === "donations" && selectedMobile && (
-              <button
-                style={styles.backButton}
-                onClick={() => {
-                  setViewMode("list");
-                  setSelectedMobile(null);
-                  setAllDonations([]);
-                }}
-                onMouseEnter={(e) => Object.assign(e.currentTarget.style, styles.backButtonHover)}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#95a5a6";
-                }}
-              >
-                ← Back to Mobile Groups
-              </button>
-            )}
-
-            {/* Mobile Info Card (when viewing donations) */}
-            {viewMode === "donations" && selectedMobile && (
-              <div style={styles.donerInfoCard}>
-                <div style={styles.donerInfoGrid}>
-                  <div style={styles.donerInfoItem}>
-                    <div style={styles.donerInfoLabel}>MOBILE NUMBER</div>
-                    <div style={styles.donerInfoValue}>
-                      {selectedMobile}
-                      <span style={styles.countBadge}>
-                        {allDonations.filter(d => d.is_main_record).length} records
-                      </span>
-                    </div>
+          {/* Complete Donation History for Mobile */}
+          {!searchLoading && viewMode === "donations" && (
+            <div style={styles.tableContainer}>
+              {allDonations.length > 0 ? (
+                <>
+                  <div style={{ marginBottom: "1rem", color: "#495057" }}>
+                    <h3 style={{ marginBottom: "0.5rem" }}>Donation Details:</h3>
+                    <p style={{ fontSize: "0.9rem", color: "#6c757d" }}>
+                      Showing all records for mobile number: <strong>{selectedMobile}</strong>
+                    </p>
                   </div>
-                  <div style={styles.donerInfoItem}>
-                    <div style={styles.donerInfoLabel}>ASSOCIATED NAMES</div>
-                    <div style={styles.donerInfoValue}>
-                      {selectedUniqueNames.join(", ")}
-                      {selectedUniqueNames.length > 1 && (
-                        <span style={styles.nameBadge}>
-                          {selectedUniqueNames.length} names
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div style={styles.donerInfoItem}>
-                    <div style={styles.donerInfoLabel}>TOTAL DONATED</div>
-                    <div style={styles.donerInfoValue}>{formatCurrency(totalAmount)}</div>
-                  </div>
-                  <div style={styles.donerInfoItem}>
-                    <div style={styles.donerInfoLabel}>LAST DONATION</div>
-                    <div style={styles.donerInfoValue}>
-                      {allDonations.length > 0 ? formatDate(allDonations[0].date) : "N/A"}
-                    </div>
-                  </div>
-                </div>
-                <div style={styles.statsCard}>
-                  <div style={styles.statsGrid}>
-                    <div style={styles.statItem}>
-                      <div style={styles.statValue}>
-                        {allDonations.filter(d => d.is_main_record).length}
-                      </div>
-                      <div style={styles.statLabel}>Total Records</div>
-                    </div>
-                    <div style={styles.statItem}>
-                      <div style={styles.statValue}>{totalTransactions}</div>
-                      <div style={styles.statLabel}>Total Donations</div>
-                    </div>
-                    <div style={styles.statItem}>
-                      <div style={styles.statValue}>
-                        {formatCurrency(totalAmount)}
-                      </div>
-                      <div style={styles.statLabel}>Total Amount</div>
-                    </div>
-                    <div style={styles.statItem}>
-                      <div style={styles.statValue}>
-                        {formatCurrency(averageDonation)}
-                      </div>
-                      <div style={styles.statLabel}>Average Donation</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Loading State */}
-            {loading && viewMode === "list" && (
-              <div style={styles.loadingContainer}>
-                <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>⏳</div>
-                <p>Loading donor records...</p>
-              </div>
-            )}
-
-            {searchLoading && viewMode === "donations" && (
-              <div style={styles.loadingContainer}>
-                <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>🔍</div>
-                <p>Loading complete donation history...</p>
-              </div>
-            )}
-
-            {/* Grouped by Mobile List */}
-            {!loading && viewMode === "list" && (
-              <div style={styles.tableContainer}>
-                {groupedByMobileArray.length > 0 ? (
                   <table style={styles.table}>
                     <thead style={styles.tableHeader}>
                       <tr>
-                        <th style={styles.tableHeaderCell}>Mobile Number</th>
-                        <th style={styles.tableHeaderCell}>Associated Names</th>
-                        <th style={styles.tableHeaderCell}>Total Amount</th>
-                        <th style={styles.tableHeaderCell}>Total Records</th>
-                        <th style={styles.tableHeaderCell}>Last Donation</th>
-                        <th style={styles.tableHeaderCell}>Actions</th>
+                        <th style={styles.tableHeaderCell}>Date</th>
+                        <th style={styles.tableHeaderCell}>Donor Name</th>
+                        <th style={styles.tableHeaderCell}>Amount</th>
+                        <th style={styles.tableHeaderCell}>Payment Method</th>
+                        <th style={styles.tableHeaderCell}>Purpose</th>
+                        <th style={styles.tableHeaderCell}>Remarks</th>
+                        <th style={styles.tableHeaderCell}>Type</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {groupedByMobileArray.map((group, index) => (
+                      {allDonations.map((donation, index) => (
                         <tr
-                          key={`${group.mobile_no}_${index}`}
-                          style={styles.tableRow}
-                          onMouseEnter={(e) => Object.assign(e.currentTarget.style, styles.tableRowHover)}
+                          key={`${donation.id}_${index}`}
+                          style={styles.donationRow}
+                          onMouseEnter={(e) =>
+                            Object.assign(e.currentTarget.style, styles.donationRowHover)
+                          }
                           onMouseLeave={(e) => {
                             e.currentTarget.style.background = "";
                           }}
                         >
-                          <td style={styles.tableCell}>
-                            <div style={{ fontWeight: "600", color: "#2c3e50" }}>
-                              {group.mobile_no}
-                              <span style={styles.mobileBadge}>
-                                {group.count} {group.count === 1 ? 'record' : 'records'}
-                              </span>
-                            </div>
+                          <td style={{ ...styles.tableCell, ...styles.dateCell }}>
+                            {formatDate(donation.date)}
                           </td>
                           <td style={styles.tableCell}>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.25rem" }}>
-                              {Array.from(group.uniqueNames).map((name, idx) => (
-                                <span
-                                  key={idx}
-                                  style={{
-                                    display: "inline-block",
-                                    padding: "0.25rem 0.5rem",
-                                    borderRadius: "4px",
-                                    background: "#e9ecef",
-                                    color: "#495057",
-                                    fontSize: "0.8rem",
-                                  }}
-                                >
-                                  {name}
-                                </span>
-                              ))}
-                            </div>
+                            {donation.doner_name}
+                            {donation.is_main_record && (
+                              <span style={styles.mainRecordBadge}>MAIN</span>
+                            )}
                           </td>
                           <td style={{ ...styles.tableCell, ...styles.amountCell }}>
-                            {formatCurrency(group.totalAmount)}
+                            {formatCurrency(donation.amount)}
                           </td>
                           <td style={styles.tableCell}>
                             <span
                               style={{
                                 display: "inline-block",
                                 padding: "0.25rem 0.5rem",
-                                borderRadius: "50%",
-                                background: group.count > 1 ? "#f8d7da" : "#d4edda",
-                                color: group.count > 1 ? "#721c24" : "#155724",
+                                borderRadius: "4px",
+                                background: donation.is_main_record ? "#d4edda" : "#e3f2fd",
+                                color: donation.is_main_record ? "#155724" : "#1976d2",
                                 fontSize: "0.85rem",
-                                fontWeight: "600",
-                                width: "24px",
-                                height: "24px",
-                                textAlign: "center",
-                                lineHeight: "24px",
                               }}
                             >
-                              {group.count}
+                              {donation.payment_method}
                             </span>
-                            {group.count > 1 && (
-                              <span style={{ marginLeft: "0.5rem", fontSize: "0.85rem", color: "#6c757d" }}>
-                                records
+                          </td>
+                          <td style={styles.tableCell}>{donation.purpose}</td>
+                          <td style={styles.tableCell}>
+                            {donation.remarks || (
+                              <span style={{ color: "#95a5a6", fontStyle: "italic" }}>
+                                No remarks
                               </span>
                             )}
                           </td>
-                          <td style={{ ...styles.tableCell, ...styles.dateCell }}>
-                            {formatDate(group.lastDonation)}
-                          </td>
                           <td style={styles.tableCell}>
-                            <button
-                              onClick={() => handleMobileSelect(group.mobile_no)}
-                              style={{
-                                padding: "0.6rem 1.2rem",
-                                background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
-                                color: "white",
-                                border: "none",
-                                borderRadius: "8px",
-                                fontSize: "0.85rem",
-                                fontWeight: "600",
-                                cursor: "pointer",
-                                transition: "all 0.3s ease",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.transform = "translateY(-3px)";
-                                e.currentTarget.style.boxShadow = "0 6px 12px rgba(102, 126, 234, 0.4)";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.transform = "translateY(0)";
-                                e.currentTarget.style.boxShadow = "none";
-                              }}
-                            >
-                              View All Records
-                            </button>
+                            {donation.is_main_record ? (
+                              <span style={{ color: "#155724", fontSize: "0.85rem", fontWeight: "600" }}>
+                                Main Record
+                              </span>
+                            ) : (
+                              <span style={{ color: "#1976d2", fontSize: "0.85rem" }}>
+                                Additional Transaction
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                ) : (
-                  <div style={styles.noData}>
-                    <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>📭</div>
-                    <p>No donors found</p>
-                    <p style={{ fontSize: "0.9rem", marginTop: "0.5rem", color: "#95a5a6" }}>
-                      {searchTerm ? "Try a different search term" : "No donor records available"}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Complete Donation History for Mobile */}
-            {!searchLoading && viewMode === "donations" && (
-              <div style={styles.tableContainer}>
-                {allDonations.length > 0 ? (
-                  <>
-                    <div style={{ marginBottom: "1rem", color: "#495057" }}>
-                      <h3 style={{ marginBottom: "0.5rem" }}>Donation Details:</h3>
-                      <p style={{ fontSize: "0.9rem", color: "#6c757d" }}>
-                        Showing all records for mobile number: <strong>{selectedMobile}</strong>
-                      </p>
-                    </div>
-                    <table style={styles.table}>
-                      <thead style={styles.tableHeader}>
-                        <tr>
-                          <th style={styles.tableHeaderCell}>Date</th>
-                          <th style={styles.tableHeaderCell}>Donor Name</th>
-                          <th style={styles.tableHeaderCell}>Amount</th>
-                          <th style={styles.tableHeaderCell}>Payment Method</th>
-                          <th style={styles.tableHeaderCell}>Purpose</th>
-                          <th style={styles.tableHeaderCell}>Remarks</th>
-                          <th style={styles.tableHeaderCell}>Type</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allDonations.map((donation, index) => (
-                          <tr
-                            key={`${donation.id}_${index}`}
-                            style={styles.donationRow}
-                            onMouseEnter={(e) =>
-                              Object.assign(e.currentTarget.style, styles.donationRowHover)
-                            }
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = "";
-                            }}
-                          >
-                            <td style={{ ...styles.tableCell, ...styles.dateCell }}>
-                              {formatDate(donation.date)}
-                            </td>
-                            <td style={styles.tableCell}>
-                              {donation.doner_name}
-                              {donation.is_main_record && (
-                                <span style={styles.mainRecordBadge}>MAIN</span>
-                              )}
-                            </td>
-                            <td style={{ ...styles.tableCell, ...styles.amountCell }}>
-                              {formatCurrency(donation.amount)}
-                            </td>
-                            <td style={styles.tableCell}>
-                              <span
-                                style={{
-                                  display: "inline-block",
-                                  padding: "0.25rem 0.5rem",
-                                  borderRadius: "4px",
-                                  background: donation.is_main_record ? "#d4edda" : "#e3f2fd",
-                                  color: donation.is_main_record ? "#155724" : "#1976d2",
-                                  fontSize: "0.85rem",
-                                }}
-                              >
-                                {donation.payment_method}
-                              </span>
-                            </td>
-                            <td style={styles.tableCell}>{donation.purpose}</td>
-                            <td style={styles.tableCell}>
-                              {donation.remarks || (
-                                <span style={{ color: "#95a5a6", fontStyle: "italic" }}>
-                                  No remarks
-                                </span>
-                              )}
-                            </td>
-                            <td style={styles.tableCell}>
-                              {donation.is_main_record ? (
-                                <span style={{ color: "#155724", fontSize: "0.85rem", fontWeight: "600" }}>
-                                  Main Record
-                                </span>
-                              ) : (
-                                <span style={{ color: "#1976d2", fontSize: "0.85rem" }}>
-                                  Additional Transaction
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
-                ) : (
-                  <div style={styles.noData}>
-                    <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>💳</div>
-                    <p>No donation history found for this mobile number</p>
-                    <p style={{ fontSize: "0.9rem", marginTop: "0.5rem", color: "#95a5a6" }}>
-                      Mobile: {selectedMobile}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                </>
+              ) : (
+                <div style={styles.noData}>
+                  <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>💳</div>
+                  <p>No donation history found for this mobile number</p>
+                  <p style={{ fontSize: "0.9rem", marginTop: "0.5rem", color: "#95a5a6" }}>
+                    Mobile: {selectedMobile}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
-    
+    </div>
+
   );
 
   // If used as modal, wrap with modal styles
