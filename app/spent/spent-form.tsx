@@ -226,10 +226,13 @@ export default function ExpenseForm({
 
           {/* Contact Number */}
           <div className={styles.fieldGroup}>
-            <label className={styles.label}>📱 Contact Number</label>
+            <label className={styles.label}>
+              📱 Contact Number {expenseType === "loan" && "*"}
+            </label>
             <input
               name="mobile_no"
               placeholder="0300-1234567"
+              required={expenseType === "loan"}
               className={styles.input}
               disabled={loading}
             />

@@ -55,7 +55,7 @@
 // };
 
 // export default function RecentActivity({ recentDonors, recentTransactions }: RecentActivityProps) {
-  
+
 //   const formatDate = (dateString: string) => {
 //     return new Date(dateString).toLocaleDateString("en-US", {
 //       month: "short",
@@ -141,7 +141,7 @@ type RecentActivityProps = {
 };
 
 export default function RecentActivity({ recentDonors, recentTransactions }: RecentActivityProps) {
-  
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
@@ -190,7 +190,7 @@ export default function RecentActivity({ recentDonors, recentTransactions }: Rec
       purpose: transaction.purpose || (transaction.type === "loan" ? "Loan Disbursed" : "Expense")
     }))
   ]
-  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   // client-side search (name, purpose, amount)
   const filtered = combinedActivities.filter((act) => {
@@ -252,11 +252,12 @@ export default function RecentActivity({ recentDonors, recentTransactions }: Rec
         <table className={styles.recentActivityTable} role="table">
           <thead>
             <tr role="row" className={styles.recentTableHeader}>
-              <th role="columnheader" className={styles.cellType}>Type</th>
-              <th role="columnheader" className={styles.cellName}>Name</th>
-              <th role="columnheader" className={styles.cellPurpose}>Purpose</th>
+              <th role="columnheader" className={styles.cellType}>Activity</th>
+              <th role="columnheader" className={styles.cellName}>Recipient/Donor</th>
+              <th role="columnheader" className={styles.cellPurpose}>Description</th>
               <th role="columnheader" className={styles.cellAmount}>Amount</th>
-              <th role="columnheader" className={styles.cellTime}>Date</th>
+              <th role="columnheader" className={styles.cellStatus}>Status</th>
+              <th role="columnheader" className={styles.cellTime}>Date & Time</th>
             </tr>
           </thead>
 
@@ -278,33 +279,50 @@ export default function RecentActivity({ recentDonors, recentTransactions }: Rec
                 style={(activity as any).__optimistic ? { opacity: 0.65 } : undefined}
               >
                 <td role="cell" className={styles.cellType}>
-                  <span className={styles.activityType} style={{ background: activity.color + "10", color: activity.color }}>
-                    {activity.type === "donation" ? "Donation" : activity.type === "loan" ? "Loan" : "Expense"}
+                  <span className={styles.typeBadgeWrapper}>
+                    <span className={styles.typeBadge}>
+                      {activity.type === "donation" ? "Donation" : activity.type === "loan" ? "Loan" : "Expense"}
+                    </span>
                   </span>
                 </td>
 
                 <td role="cell" className={styles.cellName}>
                   <div className={styles.rowNameWrap}>
-                    <div className={styles.activityIcon} aria-hidden style={{ background: activity.color + "1A", color: activity.color }}>
-                      <span className={styles.activityInitials}>{getInitials(activity.name)}</span>
-                    </div>
-                    <div className={styles.nameCellText}>
-                      <div className={styles.activityName}>{activity.name} {(activity as any).__optimistic && <span className={styles.pendingTag}>(pending)</span>}</div>
-                      <div className={styles.activitySubText}>{activity.purpose}</div>
+                    <div className={styles.nameContent}>
+                      <span className={styles.activityName}>{activity.name}</span>
+                      <span className={styles.activityCategory}>
+                        {activity.type === "donation" ? "Inbound Fund" : activity.type === "loan" ? "Disbursement" : "Administrative"}
+                      </span>
                     </div>
                   </div>
                 </td>
 
                 <td role="cell" className={styles.cellPurpose}>
-                  <div className={styles.activityPurpose}>{activity.purpose}</div>
+                  <span className={styles.purposeText}>{activity.purpose}</span>
                 </td>
 
                 <td role="cell" className={styles.cellAmount}>
-                  <div className={styles.activityAmount}>{formatCurrency(activity.amount)}</div>
+                  <span className={styles.amountWrapper}>
+                    <span className={`${styles.amountValue} ${activity.type === 'donation' ? styles.positiveAmount : styles.negativeAmount}`}>
+                      {activity.type === 'donation' ? '+' : '-'} {formatCurrency(activity.amount)}
+                    </span>
+                  </span>
+                </td>
+
+                <td role="cell" className={styles.cellStatus}>
+                  {(activity as any).__optimistic ? (
+                    <span className={styles.statusBadgePending}>
+                      Pending
+                    </span>
+                  ) : (
+                    <span className={styles.statusBadgeSuccess}>
+                      Completed
+                    </span>
+                  )}
                 </td>
 
                 <td role="cell" className={styles.cellTime}>
-                  <div className={styles.activityTime}>{formatDate(activity.date)}</div>
+                  <span className={styles.timeWrapper}>{formatDate(activity.date)}</span>
                 </td>
               </tr>
             ))}

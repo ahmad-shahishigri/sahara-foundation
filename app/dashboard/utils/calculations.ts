@@ -27,9 +27,9 @@ export async function getDashboardStats() {
     const totalLoans = loans.reduce((sum, loan) => sum + loan.total_amount, 0);
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.total_amount, 0);
 
-    // Calculate active loans - removed loan_status filter, using remaining_amount > 0 as proxy
+    // Calculate active loans - using remaining_amount ?? total_amount to handle zero correctly
     const totalActiveLoans = loans.reduce((sum, loan) =>
-      sum + (loan.remaining_amount || loan.total_amount), 0);
+      sum + (loan.remaining_amount ?? loan.total_amount), 0);
 
     // Calculate available balance
     const availableBalance = totalFunds - totalExpenses - totalActiveLoans;

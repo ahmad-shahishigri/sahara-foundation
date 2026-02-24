@@ -17,7 +17,7 @@ type ExpenseRecordType = {
   remarks?: string;
   expense_date: string;
   created_at: string;
-  
+
   // Loan specific fields
   loan_type?: "installment" | "one_time";
   return_date?: string;
@@ -47,7 +47,7 @@ export default function LoanForm() {
   const [filteredRecords, setFilteredRecords] = useState<ExpenseRecordType[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<ExpenseRecordType | null>(null);
   const [loanReturns, setLoanReturns] = useState<LoanReturnType[]>([]);
-  const [viewMode, setViewMode] = useState<"all" | "loan" | "expense">("all");
+  const [viewMode, setViewMode] = useState<"all" | "loan" | "expense" | "active_loan" | "completed_loan">("all");
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"records" | "details">("records");
@@ -76,7 +76,7 @@ export default function LoanForm() {
   // Fetch all records and setup real-time listener
   useEffect(() => {
     fetchRecords();
-    
+
     // Setup real-time subscription to auto-refresh when data changes
     const channel = supabase
       .channel('expense_records_changes')
@@ -94,7 +94,7 @@ export default function LoanForm() {
         }
       )
       .subscribe();
-    
+
     // Cleanup subscription
     return () => {
       channel.unsubscribe();
@@ -121,14 +121,16 @@ export default function LoanForm() {
     try {
       setLoading(true);
       setErrorMessage(null);
-      
+
       let query = supabase
         .from("expense_records")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (viewMode !== "all") {
-        query = query.eq("type", viewMode);
+      if (viewMode === "loan" || viewMode === "active_loan" || viewMode === "completed_loan") {
+        query = query.eq("type", "loan");
+      } else if (viewMode === "expense") {
+        query = query.eq("type", "expense");
       }
 
       const { data, error } = await query;
@@ -137,9 +139,24 @@ export default function LoanForm() {
         console.error("Supabase error:", error);
         throw error;
       }
-      
-      setRecords(data || []);
-      setFilteredRecords(data || []);
+
+      // Fetch all returns to calculate correct status for filtering
+      const { data: allReturns } = await supabase.from("loan_returns").select("*");
+
+      let finalData = data || [];
+
+      if (viewMode === "active_loan" || viewMode === "completed_loan") {
+        finalData = finalData.filter(record => {
+          if (record.type !== "loan") return false;
+          const returned = (allReturns || []).filter(r => r.loan_id === record.id).reduce((sum, r) => sum + r.return_amount, 0);
+          const actualRemaining = Math.max(0, record.total_amount - returned);
+          const isCompleted = actualRemaining <= 0;
+          return viewMode === "completed_loan" ? isCompleted : !isCompleted;
+        });
+      }
+
+      setRecords(finalData);
+      setFilteredRecords(finalData);
     } catch (error: any) {
       console.error("Error fetching records:", error);
     } finally {
@@ -150,7 +167,7 @@ export default function LoanForm() {
   async function fetchRecordDetails(recordId: string, mobile_no: string) {
     try {
       setDetailsLoading(true);
-      
+
       // Get the specific record
       const { data: recordData, error: recordError } = await supabase
         .from("expense_records")
@@ -159,7 +176,7 @@ export default function LoanForm() {
         .single();
 
       if (recordError) throw recordError;
-      
+
       // Get all records with same mobile number
       const { data: allRecords, error: allError } = await supabase
         .from("expense_records")
@@ -168,24 +185,22 @@ export default function LoanForm() {
         .order("expense_date", { ascending: false });
 
       if (allError) throw allError;
-      
-      // Fetch loan returns for this loan if it's a loan
-      let returnsData: LoanReturnType[] = [];
-      if (recordData.type === "loan") {
-        const { data: returns, error: returnsError } = await supabase
-          .from("loan_returns")
-          .select("*")
-          .eq("loan_id", recordId)
-          .order("return_date", { ascending: false });
-        
-        if (!returnsError) {
-          returnsData = returns || [];
-        }
-      }
-      
+
       setSelectedRecord(recordData);
       setRecords(allRecords || []);
-      setLoanReturns(returnsData);
+
+      // Fetch ALL loan returns for ALL loans associated with this mobile number
+      // This ensures correct remaining balance for every loan in the history
+      const { data: returns, error: returnsError } = await supabase
+        .from("loan_returns")
+        .select("*")
+        .in("loan_id", allRecords.filter(r => r.type === "loan").map(r => r.id))
+        .order("return_date", { ascending: false });
+
+      if (!returnsError) {
+        setLoanReturns(returns || []);
+      }
+
       setActiveTab("details");
     } catch (error: any) {
       console.error("Error fetching record details:", error);
@@ -198,8 +213,26 @@ export default function LoanForm() {
   // Handle Return Loan Button Click
   const handleReturnLoan = (loan: ExpenseRecordType) => {
     setSelectedLoanForReturn(loan);
+
+    // Calculate suggested amount for installments
+    let suggestedAmount = "";
+    if (loan.loan_type === "installment" && loan.total_installments && loan.total_installments > 0) {
+      const rawPerInstallment = loan.total_amount / loan.total_installments;
+      const roundedPerInstallment = Math.round(rawPerInstallment * 100) / 100;
+      const remaining = getActualRemaining(loan);
+
+      let expected = Math.min(roundedPerInstallment, remaining);
+      // If it's the last installment, grab the exact remaining balance (even if slightly off due to rounding)
+      if (remaining <= roundedPerInstallment + 0.05) {
+        expected = remaining;
+      }
+      suggestedAmount = expected.toString();
+    } else if (loan.loan_type === "one_time") {
+      suggestedAmount = getActualRemaining(loan).toString();
+    }
+
     setReturnData({
-      amount: "",
+      amount: suggestedAmount,
       date: new Date().toISOString().split("T")[0],
       payment_method: loan.payment_method || "",
       remarks: ""
@@ -209,31 +242,65 @@ export default function LoanForm() {
 
   // Process Loan Return
   const processLoanReturn = async () => {
-    if (!selectedLoanForReturn || !returnData.amount) return;
-    
+    if (!selectedLoanForReturn || !returnData.amount) {
+      setErrorMessage("Missing loan or return amount");
+      return;
+    }
+
     const amount = parseFloat(returnData.amount);
-    const currentRemaining = selectedLoanForReturn.remaining_amount || selectedLoanForReturn.total_amount;
-    
+
     if (isNaN(amount) || amount <= 0) {
       setErrorMessage("Please enter a valid amount");
       return;
     }
-    
-    if (amount > currentRemaining) {
-      setErrorMessage("Return amount cannot exceed remaining amount");
-      return;
-    }
 
     setProcessingReturn(true);
-    
+
     try {
-      const newRemaining = currentRemaining - amount;
-      
-      // Start a transaction (Supabase doesn't have transactions in client, so we'll do sequentially)
-      // 1. Update the loan's remaining amount
+      const currentActualRemaining = getActualRemaining(selectedLoanForReturn);
+
+      if (amount > currentActualRemaining) {
+        setErrorMessage("Return amount cannot exceed remaining amount");
+        setProcessingReturn(false);
+        return;
+      }
+
+      // Enforce accurate installment amount for installment loans
+      if (
+        selectedLoanForReturn.loan_type === "installment" &&
+        selectedLoanForReturn.total_installments &&
+        selectedLoanForReturn.total_installments > 0
+      ) {
+        const rawPerInstallment = selectedLoanForReturn.total_amount / selectedLoanForReturn.total_installments;
+        const roundedPerInstallment = Math.round(rawPerInstallment * 100) / 100;
+
+        let expectedAmount = Math.min(roundedPerInstallment, currentActualRemaining);
+        if (currentActualRemaining <= roundedPerInstallment + 0.05) {
+          expectedAmount = currentActualRemaining;
+        }
+
+        // Check if the amount entered differs from the expected amount by more than 0.01
+        if (Math.abs(amount - expectedAmount) > 0.01) {
+          const formattedExpected = new Intl.NumberFormat("en-PK", { maximumFractionDigits: 2 }).format(expectedAmount);
+          setErrorMessage(`For this installment loan, the payment amount must be exactly Rs ${formattedExpected}`);
+          setProcessingReturn(false);
+          return;
+        }
+      } else if (selectedLoanForReturn.loan_type === "one_time") {
+        if (Math.abs(amount - currentActualRemaining) > 0.01) {
+          const formattedExpected = new Intl.NumberFormat("en-PK", { maximumFractionDigits: 2 }).format(currentActualRemaining);
+          setErrorMessage(`For a one-time loan, the payment must be the full remaining amount of Rs ${formattedExpected}`);
+          setProcessingReturn(false);
+          return;
+        }
+      }
+
+      const newRemaining = currentActualRemaining - amount;
+
+      // 1. Update the loan's remaining amount (cached value)
       const { error: updateError } = await supabase
         .from("expense_records")
-        .update({ 
+        .update({
           remaining_amount: newRemaining
         })
         .eq("id", selectedLoanForReturn.id);
@@ -256,7 +323,7 @@ export default function LoanForm() {
 
       // Refresh all data
       await fetchRecords();
-      
+
       // If we're viewing details, refresh that too
       if (selectedRecord?.id === selectedLoanForReturn.id) {
         await fetchRecordDetails(selectedLoanForReturn.id, selectedLoanForReturn.mobile_no);
@@ -271,10 +338,10 @@ export default function LoanForm() {
         remarks: ""
       });
       setErrorMessage(null);
-      
+
       // Show success message
       alert(`✅ Successfully recorded return of Rs ${amount.toLocaleString()} on ${new Date(returnData.date).toLocaleDateString()}. Remaining amount: Rs ${newRemaining.toLocaleString()}`);
-      
+
     } catch (error: any) {
       console.error("Error processing return:", error);
       setErrorMessage(`Failed to process return: ${error.message}`);
@@ -287,7 +354,7 @@ export default function LoanForm() {
   const downloadLoanDetails = async (loan: ExpenseRecordType) => {
     try {
       setDownloadingDoc(true);
-      
+
       // Fetch loan returns if not already loaded
       let returnsData: LoanReturnType[] = [];
       if (!loanReturns.some(r => r.loan_id === loan.id)) {
@@ -296,19 +363,19 @@ export default function LoanForm() {
           .select("*")
           .eq("loan_id", loan.id)
           .order("return_date", { ascending: true });
-        
+
         if (!error) {
           returnsData = returns || [];
         }
       } else {
         returnsData = loanReturns.filter(r => r.loan_id === loan.id);
       }
-      
+
       const totalReturned = returnsData.reduce((sum, r) => sum + r.return_amount, 0);
       const remainingAmount = loan.remaining_amount || loan.total_amount;
       const actualRemaining = remainingAmount - totalReturned;
       const isCompleted = actualRemaining <= 0;
-      
+
       // Create HTML content for the document
       const htmlContent = `
         <!DOCTYPE html>
@@ -616,7 +683,7 @@ export default function LoanForm() {
          <div class="footer-simple">
   <div class="footer-line">
     Authorized: <strong>Ahmad Mukhtar Shahi</strong> | 
-    <span class="system-generated">CEO Sahara</span>
+    <span class="system-generated">CEO Sahara Foundation</span>
   </div>
 </div>
           
@@ -633,26 +700,26 @@ export default function LoanForm() {
         </body>
         </html>
       `;
-      
+
       // Create a Blob with the HTML content
       const blob = new Blob([htmlContent], { type: 'text/html' });
-      
+
       // Create a download link
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       a.download = `Loan_Details_${loan.recipient_name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.html`;
-      
+
       // Trigger download
       document.body.appendChild(a);
       a.click();
-      
+
       // Cleanup
       setTimeout(() => {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
       }, 100);
-      
+
     } catch (error) {
       console.error("Error generating document:", error);
       setErrorMessage("Failed to generate document. Please try again.");
@@ -661,7 +728,6 @@ export default function LoanForm() {
     }
   };
 
-  // Calculate total returned amount
   const calculateTotalReturned = (loanId: string) => {
     return loanReturns
       .filter(returnRecord => returnRecord.loan_id === loanId)
@@ -671,22 +737,20 @@ export default function LoanForm() {
   // Check if loan is fully paid/completed
   const isLoanCompleted = (loan: ExpenseRecordType) => {
     const totalReturned = calculateTotalReturned(loan.id);
-    const remainingAmount = loan.remaining_amount || loan.total_amount;
-    const actualRemaining = remainingAmount - totalReturned;
-    return actualRemaining <= 0;
+    const actualRemaining = loan.total_amount - totalReturned;
+    return actualRemaining <= 0.01; // Using small epsilon for float comparison
   };
 
   // Get remaining amount after returns
   const getActualRemaining = (loan: ExpenseRecordType) => {
     const totalReturned = calculateTotalReturned(loan.id);
-    const remainingAmount = loan.remaining_amount || loan.total_amount;
-    return remainingAmount - totalReturned;
+    return Math.max(0, loan.total_amount - totalReturned);
   };
 
   // Group records by mobile number
   const groupedByMobile = records.reduce((groups, record) => {
     const mobileKey = record.mobile_no ? record.mobile_no.trim() : "no-number";
-    
+
     if (!groups[mobileKey]) {
       groups[mobileKey] = {
         mobile_no: record.mobile_no || "No Number",
@@ -700,10 +764,10 @@ export default function LoanForm() {
         categories: new Set<string>()
       };
     }
-    
+
     groups[mobileKey].records.push(record);
     groups[mobileKey].totalAmount += record.total_amount;
-    
+
     if (record.type === "loan") {
       groups[mobileKey].totalLoans += 1;
       if (record.category) {
@@ -715,13 +779,13 @@ export default function LoanForm() {
         groups[mobileKey].categories.add(record.category);
       }
     }
-    
+
     // Find the most recent transaction date
     const currentDate = new Date(record.expense_date);
     if (!groups[mobileKey].lastTransaction || currentDate > new Date(groups[mobileKey].lastTransaction)) {
       groups[mobileKey].lastTransaction = record.expense_date;
     }
-    
+
     return groups;
   }, {} as Record<string, {
     mobile_no: string;
@@ -764,9 +828,9 @@ export default function LoanForm() {
   // Get loan status (for display only)
   function getLoanStatus(record: ExpenseRecordType): string {
     if (record.type !== "loan") return "expense";
-    
+
     const actualRemaining = getActualRemaining(record);
-    
+
     if (actualRemaining <= 0) {
       return "completed";
     } else if (record.return_date && new Date(record.return_date) < new Date()) {
@@ -788,7 +852,7 @@ export default function LoanForm() {
 
   // Get status color
   function getStatusColor(status: string) {
-    switch(status) {
+    switch (status) {
       case "completed": return "#3498db";
       case "overdue": return "#e74c3c";
       case "active-installment": return "#2ecc71";
@@ -799,10 +863,10 @@ export default function LoanForm() {
   }
 
   // Calculate statistics for selected record
-  const allRecordsForMobile = selectedRecord 
+  const allRecordsForMobile = selectedRecord
     ? records.filter(r => r.mobile_no === selectedRecord.mobile_no)
     : [];
-  
+
   const totalRecords = allRecordsForMobile.length;
   const totalAmount = allRecordsForMobile.reduce((sum, r) => sum + r.total_amount, 0);
   const loanRecords = allRecordsForMobile.filter(r => r.type === "loan");
@@ -817,7 +881,7 @@ export default function LoanForm() {
   }).length;
 
   // Get returns for selected loan
-  const selectedLoanReturns = selectedRecord 
+  const selectedLoanReturns = selectedRecord
     ? loanReturns.filter(r => r.loan_id === selectedRecord.id)
     : [];
 
@@ -1265,7 +1329,7 @@ export default function LoanForm() {
   return (
     <div style={stylesObj.container}>
       <div style={stylesObj.wrapper}>
-        
+
 
         {/* Header */}
         <div style={stylesObj.header}>
@@ -1277,32 +1341,32 @@ export default function LoanForm() {
 
         {/* Main Card */}
 
-        
+
         <div style={stylesObj.card}>
-          
+
           {/* Search Section */}
           <div style={stylesObj.searchSection}>
             {/* Back Button */}
-        <button
-          onClick={() => router.back()}
-          style={{
-            position: "absolute",
-            // top: "20px",
-            // left: "20px",
-            backgroundColor: "green",
-            border: "none",
-            fontSize: "1.5rem",
-            cursor: "pointer",
-            padding: "5px 10px",
-            borderRadius: "6px",
-               // transition: "background-color 0.3s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.05)")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
-          title="Go back"
-        >
-          ← Back
-        </button>
+            <button
+              onClick={() => router.back()}
+              style={{
+                position: "absolute",
+                // top: "20px",
+                // left: "20px",
+                backgroundColor: "green",
+                border: "none",
+                fontSize: "1.5rem",
+                cursor: "pointer",
+                padding: "5px 10px",
+                borderRadius: "6px",
+                // transition: "background-color 0.3s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.05)")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              title="Go back"
+            >
+              ← Back
+            </button>
             <div style={stylesObj.searchContainer}>
               <label style={stylesObj.searchLabel}>
                 🔍 SEARCH BY NAME, NUMBER, OR PURPOSE
@@ -1334,8 +1398,6 @@ export default function LoanForm() {
                 📊 All Records
               </button>
 
-
-              
               <button
                 style={{
                   ...stylesObj.filterButton,
@@ -1343,8 +1405,29 @@ export default function LoanForm() {
                 }}
                 onClick={() => setViewMode("loan")}
               >
-                💰 Loans Only
+                💰 All Loans
               </button>
+
+              <button
+                style={{
+                  ...stylesObj.filterButton,
+                  ...(viewMode === "active_loan" ? stylesObj.filterButtonActive : {}),
+                }}
+                onClick={() => setViewMode("active_loan")}
+              >
+                ⏳ Active Loans
+              </button>
+
+              <button
+                style={{
+                  ...stylesObj.filterButton,
+                  ...(viewMode === "completed_loan" ? stylesObj.filterButtonActive : {}),
+                }}
+                onClick={() => setViewMode("completed_loan")}
+              >
+                ✅ Completed Loans
+              </button>
+
               <button
                 style={{
                   ...stylesObj.filterButton,
@@ -1363,7 +1446,7 @@ export default function LoanForm() {
             {errorMessage && (
               <div style={stylesObj.errorMessage}>
                 ⚠️ {errorMessage}
-                <button 
+                <button
                   onClick={() => setErrorMessage(null)}
                   style={{
                     marginLeft: "1rem",
@@ -1628,7 +1711,7 @@ export default function LoanForm() {
                     <div style={stylesObj.detailsItem}>
                       <div style={stylesObj.detailsLabel}>LAST TRANSACTION</div>
                       <div style={stylesObj.detailsValue}>
-                        {allRecordsForMobile.length > 0 
+                        {allRecordsForMobile.length > 0
                           ? formatDate(allRecordsForMobile[0].expense_date)
                           : "N/A"}
                       </div>
@@ -1654,7 +1737,7 @@ export default function LoanForm() {
                       </div>
                       {overdueLoans > 0 && (
                         <div style={stylesObj.statItem}>
-                          <div style={{...stylesObj.statValue, color: "#e74c3c"}}>{overdueLoans}</div>
+                          <div style={{ ...stylesObj.statValue, color: "#e74c3c" }}>{overdueLoans}</div>
                           <div style={stylesObj.statLabel}>Overdue Loans</div>
                         </div>
                       )}
@@ -1688,7 +1771,7 @@ export default function LoanForm() {
                         const completed = isLoanCompleted(record);
                         const actualRemaining = getActualRemaining(record);
                         const totalReturned = calculateTotalReturned(record.id);
-                        
+
                         return (
                           <tr
                             key={record.id}
@@ -1748,11 +1831,10 @@ export default function LoanForm() {
                                   >
                                     {completed ? "✅ COMPLETED" : status}
                                   </span>
-                                  {/* <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.25rem" }}>
-                                    Loan: {formatCurrency(record.total_amount)}<br />
+                                  <div style={{ fontSize: "0.8rem", color: "#666", marginTop: "0.25rem", whiteSpace: "nowrap" }}>
                                     Returned: {formatCurrency(totalReturned)}<br />
                                     Remaining: {formatCurrency(actualRemaining)}
-                                  </div> */}
+                                  </div>
                                 </div>
                               ) : (
                                 <span style={{ color: "#95a5a6", fontStyle: "italic" }}>
@@ -1839,7 +1921,7 @@ export default function LoanForm() {
                           {downloadingDoc ? "⏳ Generating..." : "📄 Download Full Details"}
                         </button>
                       </div>
-                      
+
                       {selectedLoanCompleted && (
                         <div style={{
                           background: "#d4edda",
@@ -1860,7 +1942,7 @@ export default function LoanForm() {
                           </div>
                         </div>
                       )}
-                      
+
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1rem" }}>
                         <div>
                           <strong>Loan Type:</strong> {selectedRecord.loan_type || "Not specified"}
@@ -1980,7 +2062,7 @@ export default function LoanForm() {
               Loan Amount: <strong>{formatCurrency(selectedLoanForReturn.total_amount)}</strong><br />
               Current Remaining: <strong>{formatCurrency(selectedLoanForReturn.remaining_amount || selectedLoanForReturn.total_amount)}</strong>
             </p>
-            
+
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#495057" }}>
                 Return Date *
@@ -1988,36 +2070,46 @@ export default function LoanForm() {
               <input
                 type="date"
                 value={returnData.date}
-                onChange={(e) => setReturnData({...returnData, date: e.target.value})}
+                onChange={(e) => setReturnData({ ...returnData, date: e.target.value })}
                 style={stylesObj.modalInput}
                 required
               />
             </div>
-            
+
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#495057" }}>
                 Return Amount (PKR) *
+                {selectedLoanForReturn.loan_type === "installment" && (
+                  <span style={{ fontSize: "0.8rem", color: "#27ae60", marginLeft: "0.5rem", fontWeight: "normal" }}>
+                    (Suggested: {formatCurrency(selectedLoanForReturn.total_amount / (selectedLoanForReturn.total_installments || 1))})
+                  </span>
+                )}
               </label>
               <input
                 type="number"
                 placeholder="Enter return amount"
                 value={returnData.amount}
-                onChange={(e) => setReturnData({...returnData, amount: e.target.value})}
+                onChange={(e) => setReturnData({ ...returnData, amount: e.target.value })}
                 style={stylesObj.modalInput}
                 min="0"
-                max={selectedLoanForReturn.remaining_amount || selectedLoanForReturn.total_amount}
+                max={getActualRemaining(selectedLoanForReturn)}
                 step="0.01"
                 required
               />
+              {returnData.amount && (
+                <div style={{ fontSize: "0.85rem", color: "#6c757d", marginTop: "-0.5rem", textAlign: "left" }}>
+                  New Remaining: <strong>{formatCurrency(getActualRemaining(selectedLoanForReturn) - parseFloat(returnData.amount || "0"))}</strong>
+                </div>
+              )}
             </div>
-            
+
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#495057" }}>
                 Payment Method
               </label>
               <select
                 value={returnData.payment_method}
-                onChange={(e) => setReturnData({...returnData, payment_method: e.target.value})}
+                onChange={(e) => setReturnData({ ...returnData, payment_method: e.target.value })}
                 style={stylesObj.modalSelect}
               >
                 <option value="">Select method</option>
@@ -2028,7 +2120,7 @@ export default function LoanForm() {
                 ))}
               </select>
             </div>
-            
+
             <div style={{ marginBottom: "1rem" }}>
               <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: "600", color: "#495057" }}>
                 Remarks (Optional)
@@ -2036,11 +2128,11 @@ export default function LoanForm() {
               <textarea
                 placeholder="Add any notes about this return..."
                 value={returnData.remarks}
-                onChange={(e) => setReturnData({...returnData, remarks: e.target.value})}
+                onChange={(e) => setReturnData({ ...returnData, remarks: e.target.value })}
                 style={stylesObj.modalTextarea}
               />
             </div>
-            
+
             <div style={stylesObj.modalButtons}>
               <button
                 style={{ ...stylesObj.modalButton, ...stylesObj.modalCancelButton }}

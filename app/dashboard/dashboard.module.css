@@ -8,9 +8,12 @@
   overflow-y: auto;
   display: block;
 }
-html, body {
+
+html,
+body {
   scroll-behavior: smooth;
 }
+
 /* Scrollbar styling */
 .container::-webkit-scrollbar {
   width: 10px;
@@ -41,6 +44,7 @@ html, body {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -83,6 +87,7 @@ html, body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -233,216 +238,40 @@ html, body {
 }
 
 /* ===============================
-   ACTIVITY SECTION (IMPROVED)
+   ACTIVITY SECTION (MINIMALIST TABLE)
    =============================== */
 
 .activitySection {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.8rem;
-  animation: slideInUp 0.6s ease-out;
+  margin-top: 1.5rem;
+  animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.recentActivity,
-.quickStats {
+.recentActivity {
   background: white;
-  border-radius: 12px;
-  padding: 1rem;
-  border: 1px solid rgba(229, 231, 235, 0.9);
-  box-shadow: 0 6px 24px rgba(16, 24, 40, 0.04);
-  transition: transform 0.28s cubic-bezier(.2,.9,.2,1), box-shadow 0.28s;
+  border-radius: 4px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
 }
 
-.recentActivity:hover,
-.quickStats:hover {
-  box-shadow: 0 18px 40px rgba(16,24,40,0.08);
-  transform: translateY(-6px);
-}
-
-/* container for the list */
-/* table wrapper + responsive table */
-.recentActivityTableWrapper {
-  width: 100%;
-  overflow: auto;
-  border-radius: 12px;
-}
-
-/* make table look like a card with border */
-.recentActivityTable {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  min-width: 720px;
-  font-size: 0.95rem;
-  background: white;
-  border: 1px solid rgba(226,232,240,0.9);
-  border-radius: 12px;
-  box-shadow: 0 8px 30px rgba(17,24,39,0.03);
-}
-
-.recentTableHeader th {
-  text-align: left;
-  padding: 0.85rem 1rem;
-  color: #6b7280;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.6px;
-  border-bottom: 1px solid rgba(229,231,235,0.9);
-  background: linear-gradient(180deg, #fbfdff 0%, #f7fbff 100%);
-}
-
-.recentTableRow {
-  transition: background 0.18s, transform 0.18s;
-  border-bottom: 1px solid rgba(243,244,246,0.9);
-}
-
-/* zebra */
-.recentTableRow:nth-child(even) {
-  background: rgba(15, 23, 42, 0.01);
-}
-
-.recentTableRow:hover {
-  background: rgba(99,102,241,0.03);
-  transform: translateY(-2px);
-}
-
-.cellType {
-  width: 120px;
-  padding: 0.75rem 1rem;
-  vertical-align: middle;
-}
-
-.cellName {
-  padding: 0.75rem 1rem;
-  vertical-align: middle;
-  max-width: 420px;
-}
-
-.rowNameWrap {
-  display: flex;
-  gap: 0.75rem;
-  align-items: center;
-}
-
-.nameCellText {
-  min-width: 0;
-}
-
-.cellPurpose {
-  padding: 0.75rem 1rem;
-  color: #6b7280;
-  vertical-align: middle;
-  max-width: 320px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cellAmount {
-  padding: 0.75rem 1rem;
-  text-align: right;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.cellTime {
-  padding: 0.75rem 1rem;
-  color: #9ca3af;
-  vertical-align: middle;
-  width: 160px;
-}
-
-.activityIcon {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  flex-shrink: 0;
-  box-shadow: 0 6px 18px rgba(15,23,42,0.03) inset;
-}
-
-.activityInitials {
-  font-size: 0.95rem;
-  letter-spacing: 0.6px;
-  color: inherit;
-}
-
-.activityName {
-  font-weight: 700;
-  font-size: 0.92rem;
-  color: #0f1724;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pendingTag {
-  font-size: 0.72rem;
-  color: #6b7280;
-  margin-left: 8px;
+.sectionTitle {
+  font-size: 1.1rem;
   font-weight: 600;
-  opacity: 0.85;
+  color: #2d3748;
+  margin-bottom: 1.25rem;
 }
 
-.activityType {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.28rem 0.5rem;
-  border-radius: 999px;
-  text-transform: uppercase;
-  color: inherit;
-  background: rgba(0,0,0,0.04);
-  opacity: 0.95;
-  letter-spacing: 0.6px;
-}
-
-.activityAmount {
-  font-weight: 800;
-  font-size: 0.98rem;
-  color: #4338ca;
-}
-
-.activityPurpose {
-  color: #6b7280;
-  font-size: 0.84rem;
-}
-
-.emptyRow td {
-  background: transparent;
-}
-
-/* Toolbar / search */
+/* Toolbar & Meta */
 .activityToolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
+  margin-bottom: 1rem;
   gap: 1rem;
-  margin-bottom: 0.75rem;
-}
-
-.activityToolbarLeft {
-  display: flex;
-  gap: 0.75rem;
-  align-items: baseline;
 }
 
 .activityMeta {
-  color: #9aa1ab;
-  font-size: 0.85rem;
+  display: none;
 }
 
 .activityToolbarRight {
@@ -451,63 +280,256 @@ html, body {
   align-items: center;
 }
 
+/* Search Bar */
 .searchWrap {
   position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  display: none;
 }
 
 .activitySearch {
-  padding: 0.55rem 0.9rem;
-  border-radius: 999px;
-  border: 1px solid rgba(226,232,240,0.9);
-  min-width: 260px;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.85rem;
+  width: 200px;
   background: #fff;
-  box-shadow: 0 6px 20px rgba(15,23,42,0.03) inset;
+}
+
+.activitySearch:focus {
+  outline: none;
+  border-color: #cbd5e0;
 }
 
 .clearSearch {
   position: absolute;
-  right: 6px;
-  top: 6px;
-  bottom: 6px;
-  background: transparent;
+  right: 0.5rem;
+  background: none;
   border: none;
-  color: #9ca3af;
-  padding: 0 8px;
+  color: #a0aec0;
+  cursor: pointer;
+  font-size: 0.65rem;
+}
+
+/* Export Button */
+.exportButton {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.4rem 0.75rem;
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  color: #4a5568;
+  font-size: 0.85rem;
   cursor: pointer;
 }
 
-.exportButton {
-  background: transparent;
-  border: 1px solid rgba(226,232,240,0.9);
-  padding: 0.45rem 0.75rem;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #374151;
-  font-weight: 700;
+.exportButton svg {
+  display: none;
+}
+
+/* Table Design */
+.recentActivityTableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #546e7a;
+}
+
+.recentActivityTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  min-width: 800px;
+}
+
+.recentActivityTable th {
+  padding: 0.8rem;
+  background: #546e7a;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-left: 1px solid #37474f;
+  border-bottom: 1px solid #37474f;
+}
+
+.recentActivityTable th:first-child {
+  border-left: none;
+}
+
+.recentTableRow {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.recentTableRow:last-child {
+  border-bottom: none;
+}
+
+.recentTableRow td {
+  padding: 0.8rem;
+  vertical-align: middle;
+  border-left: 1px solid #e2e8f0;
+  font-size: 0.8rem;
+  color: #4a5568;
+}
+
+.recentTableRow td:first-child {
+  border-left: none;
+}
+
+/* Status Badges */
+.statusBadgeSuccess {
+  color: #38a169;
+  font-weight: 400;
+  font-size: 0.8rem;
+}
+
+.statusBadgePending {
+  color: #d69e2e;
+  font-weight: 400;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.pulseDot {
+  display: none;
+}
+
+/* Badges / Minimal overrides */
+.typeBadgeWrapper {
+  display: block;
+}
+
+.typeBadge {
+  color: #4a5568 !important;
+  background: transparent !important;
+  border: none !important;
+  font-weight: 400;
+}
+
+.typeIcon {
+  display: none;
+}
+
+/* Name Column */
+.rowNameWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.avatarCircle {
+  display: none;
+}
+
+.nameContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.activityName {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #4a5568;
+}
+
+.activityCategory {
+  font-size: 0.75rem;
+  color: #718096;
+}
+
+/* Purpose column */
+.purposeText {
+  font-size: 0.8rem;
+  color: #4a5568;
+}
+
+/* Amount Column */
+.amountWrapper {
+  display: block;
+}
+
+.amountValue {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+.positiveAmount {
+  color: #48bb78;
+}
+
+.negativeAmount {
+  color: #f56565;
+}
+
+/* Time column */
+.timeWrapper {
+  display: block;
+  font-size: 0.8rem;
+  color: #4a5568;
+}
+
+.timeWrapper svg {
+  display: none;
+}
+
+/* States */
+.optimisticRow {
+  background: #f7fafc;
+}
+
+.emptyRow td {
+  padding: 3rem 1rem;
+}
+
+.noResults {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #a0aec0;
+}
+
+.noResultsIcon {
+  display: none;
+}
+
+/* Load More */
+.loadMoreWrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
 }
 
 .loadMoreButton {
-  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: #4a5568;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.8rem;
   cursor: pointer;
-  font-weight: 700;
 }
 
-/* Responsive: switch table to stacked cards on small screens */
-@media (max-width: 760px) {
-  .recentActivityTable { min-width: 0; }
-  .recentActivityTable thead { display: none; }
-  .recentActivityTable tbody tr { display: grid; grid-template-columns: 1fr auto; gap: 0.5rem; padding: 0.6rem; border-radius: 10px; }
-  .cellPurpose { display: none; }
-  .cellTime { grid-column: 1 / -1; color: #9ca3af; }
-  .cellAmount { grid-column: 2 / 3; text-align: right; }
-  .cellName { grid-column: 1 / -1; }
-  .activityToolbar { flex-direction: column; align-items: stretch; gap: 0.5rem; }
-  .activityToolbarRight { justify-content: flex-end; }
-  .activitySearch { min-width: 100%; }
+.loadMoreCount {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .activityToolbar {
+    justify-content: center;
+  }
 }
 
 /* Quick stats — clearer hierarchy */
@@ -524,7 +546,7 @@ html, body {
   display: flex;
   gap: 0.75rem;
   align-items: center;
-  border: 1px solid rgba(229,231,235,0.8);
+  border: 1px solid rgba(229, 231, 235, 0.8);
 }
 
 .quickStatIcon {
@@ -538,7 +560,7 @@ html, body {
   color: white;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   flex-shrink: 0;
-  box-shadow: 0 8px 30px rgba(102,126,234,0.12);
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.12);
 }
 
 .quickStatContent {
@@ -575,6 +597,7 @@ html, body {
    =============================== */
 
 @media (max-width: 768px) {
+
   .mainStatsRow,
   .secondaryStatsRow {
     grid-template-columns: 1fr;
