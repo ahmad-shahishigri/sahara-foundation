@@ -327,7 +327,6 @@ export default function DashboardPage() {
           description={`${formatCurrency(totalLoans - totalActiveLoans)} recovered of ${formatCurrency(totalLoans)}`}
           variant="secondary"
         />
-
         <StatCard
           title="Funds Utilization"
           amount={`${fundsUtilizationPct}%`}
@@ -338,7 +337,6 @@ export default function DashboardPage() {
           variant="secondary"
         />
       </div>
-
       {/* Action Buttons */}
       <ActionButtons
         onAddDonor={() => setShowDonorForm(true)}
@@ -357,8 +355,6 @@ export default function DashboardPage() {
             recentTransactions={recentTransactions}
           />
         </div>
-
-
       </div>
 
       {/* MODALS */}

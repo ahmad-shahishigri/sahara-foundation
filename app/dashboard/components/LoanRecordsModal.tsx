@@ -279,8 +279,8 @@ export default function LoanRecordsModal({ isOpen, onClose }: LoanRecordsModalPr
                       (e.currentTarget.style.background = "#f0f0f0")
                     }
                     onMouseLeave={(e) =>
-                      (e.currentTarget.style.background =
-                        index % 2 === 0 ? "#ffffff" : "#f9fafb")
+                    (e.currentTarget.style.background =
+                      index % 2 === 0 ? "#ffffff" : "#f9fafb")
                     }
                   >
                     <td style={{ padding: "1.2rem" }}>
@@ -342,12 +342,12 @@ export default function LoanRecordsModal({ isOpen, onClose }: LoanRecordsModalPr
                           fontWeight: 700,
                           background:
                             record.type === "loan" &&
-                            (record.remaining_amount || 0) > 0
+                              (record.remaining_amount || 0) > 0
                               ? "#fef3c7"
                               : "#d1fae5",
                           color:
                             record.type === "loan" &&
-                            (record.remaining_amount || 0) > 0
+                              (record.remaining_amount || 0) > 0
                               ? "#92400e"
                               : "#065f46",
                         }}
