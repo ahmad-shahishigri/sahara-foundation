@@ -233,7 +233,7 @@ export default function RecentActivity({ recentDonors, recentTransactions }: Rec
               // simple CSV export of filtered rows
               const rows = filtered.map(r => ({ type: r.type, name: r.name, purpose: r.purpose, amount: r.amount, date: r.date }));
               const csv = [Object.keys(rows[0] || {}).join(","), ...rows.map(r => Object.values(r).map(String).map(v => `"${v.replace(/"/g, '""')}"`).join(","))].join("\n");
-              const blob = new Blob([csv], { type: 'text/csv' });
+              const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
               const url = URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;

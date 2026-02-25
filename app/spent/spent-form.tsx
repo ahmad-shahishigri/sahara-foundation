@@ -78,6 +78,26 @@ export default function ExpenseForm({
     "Other"
   ];
 
+  async function getAvailableBalance(): Promise<number> {
+    try {
+      const { data: donors } = await supabase.from("doner").select("total_amount");
+      const { data: records } = await supabase
+        .from("expense_records")
+        .select("total_amount, type, remaining_amount, status");
+
+      const totalFunds = donors?.reduce((sum, d) => sum + (d.total_amount || 0), 0) || 0;
+
+      // Only count approved records against balance
+      const approvedRecords = (records || []).filter(r => r.status !== "pending");
+      const totalExpenses = approvedRecords.filter(r => r.type === "expense").reduce((s, r) => s + (r.total_amount || 0), 0);
+      const totalActiveLoans = approvedRecords.filter(r => r.type === "loan").reduce((s, r) => s + (r.remaining_amount ?? r.total_amount ?? 0), 0);
+
+      return totalFunds - totalExpenses - totalActiveLoans;
+    } catch {
+      return 0;
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -118,27 +138,40 @@ export default function ExpenseForm({
     const optimisticRecord = { ...data, id: tempId, created_at: new Date().toISOString(), __optimistic: true } as any;
 
     try {
-      if (onOptimistic) onOptimistic(optimisticRecord);
+      // Check available balance for both loans and expenses
+      let isPending = false;
+      const availableBalance = await getAvailableBalance();
+      if (data.total_amount > availableBalance) {
+        isPending = true;
+      }
+
+      if (onOptimistic && !isPending) onOptimistic(optimisticRecord);
+
+      const insertData = { ...data, status: isPending ? "pending" : "approved" };
 
       const { error } = await supabase
         .from("expense_records")
-        .insert([data]);
+        .insert([insertData]);
 
       if (error) {
         console.error(error);
         setError("Failed to save record. Please try again.");
-        if (onRollback) onRollback(tempId);
+        if (onRollback && !isPending) onRollback(tempId);
       } else {
-        setSuccess(
-          expenseType === "loan"
-            ? "Loan record has been successfully added!"
-            : "Expense record has been successfully added!"
-        );
+        if (isPending) {
+          setError(`⚠️ Sorry, we have no available funds! This ${expenseType} record has been saved in Pending Records. You can approve it later when more funds are collected.`);
+        } else {
+          setSuccess(
+            expenseType === "loan"
+              ? "Loan record has been successfully added!"
+              : "Expense record has been successfully added!"
+          );
 
-        if (onSuccess) {
-          setTimeout(() => {
-            onSuccess();
-          }, 500);
+          if (onSuccess) {
+            setTimeout(() => {
+              onSuccess();
+            }, 500);
+          }
         }
       }
     } catch (err) {

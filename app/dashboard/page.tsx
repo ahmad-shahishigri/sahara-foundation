@@ -11,6 +11,8 @@ import DonerForm from "../Doner/DonerForms";
 import ExpenseFormModal from "./components/ExpenseFormModal";
 import LoanFormModal from "./components/LoanFormModal";
 import LoanRecordsModal from "./components/LoanRecordsModal";
+import PendingRecordsModal from "./components/PendingRecordsModal";
+import ReportModal from "./components/ReportModal";
 import ViewDonors from "../Donerlist/view_doner";
 
 // Import the other components with fallbacks
@@ -27,6 +29,8 @@ export default function DashboardPage() {
   const [showLoanForm, setShowLoanForm] = useState(false);
   const [showViewDonors, setShowViewDonors] = useState(false);
   const [showLoanRecords, setShowLoanRecords] = useState(false);
+  const [showPendingRecords, setShowPendingRecords] = useState(false);
+  const [showReport, setShowReport] = useState(false);
 
   // State for tracking which components are available
   const [componentsAvailable, setComponentsAvailable] = useState({
@@ -252,9 +256,36 @@ export default function DashboardPage() {
   return (
     <div className={styles.container}>
       {/* Header */}
-      <div className={styles.header}>
-        <h1 className={styles.title}>Sahara Foundation Dashboard <b>(Admin)</b></h1>
-        <p style={{ textAlign: "center" }} >Real-time financial overview and management</p>
+      <div className={styles.header} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h1 className={styles.title}>Sahara Foundation Dashboard <b>(Admin)</b></h1>
+          <p style={{ textAlign: "left", margin: 0 }}>Real-time financial overview and management</p>
+        </div>
+        <div style={{
+          display: "flex", alignItems: "center", gap: "0.75rem",
+          background: "rgba(255,255,255,0.15)", padding: "8px 16px",
+          borderRadius: "12px", backdropFilter: "blur(10px)",
+        }}>
+          <div style={{ position: "relative" }}>
+            <img
+              src="/logo.jpeg"
+              alt="Admin"
+              style={{
+                width: "42px", height: "42px", borderRadius: "50%",
+                objectFit: "cover", border: "2px solid rgba(255,255,255,0.5)",
+              }}
+            />
+            <div style={{
+              position: "absolute", bottom: 0, right: 0,
+              width: "12px", height: "12px", borderRadius: "50%",
+              background: "#40c057", border: "2px solid white",
+            }} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "white" }}>Admin</div>
+            <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.7)" }}>Online</div>
+          </div>
+        </div>
       </div>
 
       {/* Main Stats Row */}
@@ -344,6 +375,8 @@ export default function DashboardPage() {
         onAddLoan={() => setShowLoanForm(true)}
         onViewDonors={() => setShowViewDonors(true)}
         onViewLoanRecords={() => setShowLoanRecords(true)}
+        onViewPendingRecords={() => setShowPendingRecords(true)}
+        onViewReport={() => setShowReport(true)}
       />
 
       {/* Recent Activity & Quick Stats */}
@@ -396,6 +429,19 @@ export default function DashboardPage() {
 
       {/* Loan Records Modal */}
       <LoanRecordsModal isOpen={showLoanRecords} onClose={() => setShowLoanRecords(false)} />
+
+      {/* Pending Records Modal */}
+      <PendingRecordsModal
+        isOpen={showPendingRecords}
+        onClose={() => setShowPendingRecords(false)}
+        onApproved={() => setRefreshKey(prev => prev + 1)}
+      />
+
+      {/* Report Modal */}
+      <ReportModal
+        isOpen={showReport}
+        onClose={() => setShowReport(false)}
+      />
     </div>
   );
 }

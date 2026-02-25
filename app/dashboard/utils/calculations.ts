@@ -10,7 +10,7 @@ export async function getDashboardStats() {
     // Fetch all expense_records data (both loans and expenses)
     const { data: financeRecords, error: financeError } = await supabase
       .from("expense_records")
-      .select("total_amount, type, remaining_amount");
+      .select("total_amount, type, remaining_amount, status");
 
     if (donorsError || financeError) {
       console.error("Error fetching data:", donorsError || financeError);
@@ -20,9 +20,12 @@ export async function getDashboardStats() {
     // Calculate totals
     const totalFunds = donors?.reduce((sum, donor) => sum + donor.total_amount, 0) || 0;
 
-    // Separate loans and expenses
-    const loans = financeRecords?.filter(record => record.type === "loan") || [];
-    const expenses = financeRecords?.filter(record => record.type === "expense") || [];
+    // Only count approved (non-pending) records for balance calculations
+    const approvedRecords = (financeRecords || []).filter(r => r.status !== "pending");
+
+    // Separate loans and expenses (approved only)
+    const loans = approvedRecords.filter(record => record.type === "loan");
+    const expenses = approvedRecords.filter(record => record.type === "expense");
 
     const totalLoans = loans.reduce((sum, loan) => sum + loan.total_amount, 0);
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.total_amount, 0);

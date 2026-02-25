@@ -21,19 +21,19 @@
 // //       <button onClick={() => router.push("/Doner")}>
 // //         + Add Donor
 // //       </button>
-      
+
 // //       <button onClick={() => router.push("/spent")}>
 // //         + Add Spend
 // //       </button>
-      
+
 // //       <button onClick={() => router.push("/")}>
 // //         + Add Loan
 // //       </button>
-      
+
 // //       <button onClick={() => router.push("/Donerlist")}>
 // //         View Donors
 // //       </button>
-      
+
 // //       <button onClick={() => router.push("/loanrecord")}>
 // //         View Loan +Expense Records
 // //       </button>
@@ -137,14 +137,18 @@ interface ActionButtonsProps {
   onAddLoan: () => void;
   onViewDonors: () => void;
   onViewLoanRecords: () => void;
+  onViewPendingRecords: () => void;
+  onViewReport: () => void;
 }
 
-export default function ActionButtons({ 
-  onAddDonor, 
-  onAddExpense, 
-  onAddLoan, 
-  onViewDonors, 
-  onViewLoanRecords 
+export default function ActionButtons({
+  onAddDonor,
+  onAddExpense,
+  onAddLoan,
+  onViewDonors,
+  onViewLoanRecords,
+  onViewPendingRecords,
+  onViewReport
 }: ActionButtonsProps) {
   const router = useRouter();
   // Common styles for all buttons
@@ -235,10 +239,10 @@ export default function ActionButtons({
         <span>⚡</span>
         Quick Actions
       </h2>
-      
+
       <div style={styles.actionsGrid}>
         {/* Add Donor */}
-        <div 
+        <div
           style={actionCardStyle}
           onClick={onAddDonor}
           onMouseEnter={(e) => handleMouseEnter(e, "#4c6ef5")}
@@ -252,7 +256,7 @@ export default function ActionButtons({
         </div>
 
         {/* Add Expense */}
-        <div 
+        <div
           style={actionCardStyle}
           onClick={onAddExpense}
           onMouseEnter={(e) => handleMouseEnter(e, "#20c997")}
@@ -266,7 +270,7 @@ export default function ActionButtons({
         </div>
 
         {/* Add Loan */}
-        <div 
+        <div
           style={actionCardStyle}
           onClick={onAddLoan}
           onMouseEnter={(e) => handleMouseEnter(e, "#ff922b")}
@@ -280,7 +284,7 @@ export default function ActionButtons({
         </div>
 
         {/* View Donors */}
-        <div 
+        <div
           style={actionCardStyle}
           onClick={onViewDonors}
           onMouseEnter={(e) => handleMouseEnter(e, "#9775fa")}
@@ -294,7 +298,7 @@ export default function ActionButtons({
         </div>
 
         {/* Loan Records */}
-        <div 
+        <div
           style={actionCardStyle}
           onClick={() => router.push("/loanrecord")}
           onMouseEnter={(e) => handleMouseEnter(e, "#51cf66")}
@@ -305,6 +309,34 @@ export default function ActionButtons({
           </div>
           <h3 style={styles.actionTitle}>Loan Records</h3>
           <p style={styles.actionDesc}>Track loans & expenses</p>
+        </div>
+
+        {/* Pending Records */}
+        <div
+          style={actionCardStyle}
+          onClick={onViewPendingRecords}
+          onMouseEnter={(e) => handleMouseEnter(e, "#fab005")}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div style={actionIconStyle("#fab005", "#f59f00")}>
+            ⏳
+          </div>
+          <h3 style={styles.actionTitle}>Pending Records</h3>
+          <p style={styles.actionDesc}>Review & approve pending loans</p>
+        </div>
+
+        {/* Report */}
+        <div
+          style={actionCardStyle}
+          onClick={onViewReport}
+          onMouseEnter={(e) => handleMouseEnter(e, "#22b8cf")}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div style={actionIconStyle("#22b8cf", "#15aabf")}>
+            📈
+          </div>
+          <h3 style={styles.actionTitle}>Report</h3>
+          <p style={styles.actionDesc}>View & download all records</p>
         </div>
       </div>
     </div>
