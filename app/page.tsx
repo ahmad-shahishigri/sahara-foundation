@@ -173,6 +173,7 @@ export default function Home() {
                 {[
                   {icon:"✉",label:"Email",value:"saharafoundation@support.pk",href:"mailto:saharafoundation@support.pk"},
                   {icon:"📞",label:"Office",value:"0310 5855299",href:"tel:03105855299"},
+                  {icon:"📱",label:"Mobile",value:"03495518223",href:"tel:03495518223"},
                   {icon:"📍",label:"Address",value:"PD House No. 249, Near Double Road, Rawalpindi",href:"#"},
                   {icon:"🕐",label:"Hours",value:"Mon–Fri: 9AM–5PM  ·  Sat: 10AM–2PM",href:"#"},
                 ].map(c => (
@@ -199,291 +200,236 @@ export default function Home() {
               </p>
               <form style={{display:"flex",flexDirection:"column",gap:"10px"}} onSubmit={e=>e.preventDefault()}>
                 <input type="email" placeholder="Your email address" required
-                  style={{width:"100%",padding:"11px 16px",borderRadius:"10px",
-                    background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",
-                    color:"white",fontSize:"14px",outline:"none"}} />
+                  style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",
+                    borderRadius:"10px",padding:"11px 14px",color:"#e2e8f0",fontSize:"13px",outline:"none"}}/>
                 <button type="submit"
-                  style={{display:"flex",alignItems:"center",justifyContent:"center",gap:"8px",
-                    padding:"11px",borderRadius:"10px",border:"none",cursor:"pointer",
-                    background:"linear-gradient(135deg,#6366f1,#8b5cf6)",
-                    color:"white",fontSize:"14px",fontWeight:600}}>
-                  Subscribe
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
-                  </svg>
+                  style={{background:"linear-gradient(135deg,#6366f1,#8b5cf6)",border:"none",
+                    borderRadius:"10px",padding:"11px",color:"white",fontSize:"13px",
+                    fontWeight:600,cursor:"pointer",letterSpacing:"0.3px"}}>
+                  Subscribe to Updates
                 </button>
               </form>
-              <div style={{display:"flex",flexDirection:"column",gap:"10px",marginTop:"20px"}}>
-                {[{icon:"🛡️",text:"Trusted & Verified NGO"},{icon:"📜",text:"Registered with SECP Pakistan"}].map(b=>(
-                  <div key={b.text} style={{display:"flex",alignItems:"center",gap:"10px",
-                    padding:"10px 14px",borderRadius:"10px",
-                    background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)"}}>
-                    <span style={{fontSize:"16px"}}>{b.icon}</span>
-                    <span style={{fontSize:"13px",color:"#94a3b8",fontWeight:500}}>{b.text}</span>
-                  </div>
-                ))}
+              <div style={{marginTop:"20px",padding:"14px",background:"rgba(99,102,241,0.08)",
+                border:"1px solid rgba(99,102,241,0.15)",borderRadius:"12px"}}>
+                <p style={{fontSize:"12px",color:"#64748b",lineHeight:"1.6",margin:0}}>
+                  🔒 We respect your privacy. No spam — only meaningful updates about our work.
+                </p>
               </div>
             </div>
+
           </div>
 
           {/* Footer bottom bar */}
           <div style={footerBottomStyle}>
-            <div style={footerBottomInnerStyle}>
-              <p style={{fontSize:"13px",color:"#475569"}}>© 2024 Sahara Welfare Foundation. All Rights Reserved.</p>
-              <div style={{display:"flex",gap:"20px"}}>
-                {["Privacy Policy","Terms of Service","Disclaimer","Sitemap"].map(l=>(
-                  <a key={l} href="#" style={{fontSize:"13px",color:"#475569",textDecoration:"none"}}>{l}</a>
-                ))}
-              </div>
-              <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-                <span style={{fontSize:"12px",color:"#475569"}}>Accepts:</span>
-                {["JazzCash","EasyPaisa","Bank Transfer"].map(t=>(
-                  <span key={t} style={{fontSize:"12px",padding:"3px 10px",borderRadius:"6px",
-                    background:"rgba(99,102,241,0.1)",border:"1px solid rgba(99,102,241,0.2)",
-                    color:"#818cf8"}}>{t}</span>
-                ))}
-              </div>
+            <p style={{fontSize:"13px",color:"#475569"}}>© 2024 Sahara Welfare Foundation. All Rights Reserved.</p>
+            <div style={{display:"flex",gap:"20px",flexWrap:"wrap"}}>
+              {["Privacy Policy","Terms of Service","Disclaimer","Sitemap"].map(l=>(
+                <a key={l} href="#" style={{fontSize:"12px",color:"#475569",textDecoration:"none"}}>{l}</a>
+              ))}
             </div>
           </div>
         </div>
       </footer>
-
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Inter',system-ui,sans-serif; }
-        nav a:hover { opacity:0.75; }
-        @keyframes float {
-          0%,100% { transform:translateY(0px); }
-          50%      { transform:translateY(-14px); }
-        }
-        @keyframes pulse-glow {
-          0%,100% { opacity:0.35; transform:scale(1); }
-          50%      { opacity:0.6;  transform:scale(1.05); }
-        }
-      `}</style>
     </div>
   );
 }
 
-/* ── Styles ─────────────────────────────────────────────────────────────── */
+/* ─────────────────────────────────────────────────────────────────────────── */
+/*  Styles                                                                      */
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 const pageStyle: React.CSSProperties = {
-  minHeight:"100vh", display:"flex", flexDirection:"column",
-  background:"linear-gradient(160deg,#0f172a 0%,#1e1b4b 55%,#0f172a 100%)",
-  color:"white",
+  minHeight:"100vh",
+  background:"#090d1a",
+  color:"#e2e8f0",
+  fontFamily:"var(--font-geist-sans), system-ui, sans-serif",
+  overflowX:"hidden",
 };
 
 /* Nav */
 const navStyle: React.CSSProperties = {
-  position:"sticky",top:0,zIndex:100,
-  background:"rgba(15,23,42,0.85)",backdropFilter:"blur(16px)",
+  position:"fixed",top:0,left:0,right:0,zIndex:50,
+  background:"rgba(9,13,26,0.85)",
+  backdropFilter:"blur(20px)",
   borderBottom:"1px solid rgba(255,255,255,0.06)",
 };
 const navContainerStyle: React.CSSProperties = {
   maxWidth:"1200px",margin:"0 auto",padding:"0 24px",
   display:"flex",alignItems:"center",justifyContent:"space-between",height:"64px",
 };
-const navBrandStyle: React.CSSProperties = { display:"flex",alignItems:"center",gap:"10px" };
+const navBrandStyle: React.CSSProperties = {display:"flex",alignItems:"center",gap:"12px"};
 const navLogoStyle: React.CSSProperties = {
   width:"36px",height:"36px",borderRadius:"10px",
   background:"linear-gradient(135deg,#6366f1,#8b5cf6)",
   display:"flex",alignItems:"center",justifyContent:"center",
 };
-const navBrandTextStyle: React.CSSProperties = { fontSize:"15px",fontWeight:700,color:"white" };
-const navLinksStyle: React.CSSProperties = { display:"flex",alignItems:"center",gap:"8px" };
+const navBrandTextStyle: React.CSSProperties = {
+  fontWeight:700,fontSize:"16px",color:"#f1f5f9",letterSpacing:"-0.2px",
+};
+const navLinksStyle: React.CSSProperties = {display:"flex",alignItems:"center",gap:"8px"};
 const navLinkStyle: React.CSSProperties = {
-  padding:"8px 14px",borderRadius:"8px",
-  color:"rgba(255,255,255,0.65)",fontSize:"14px",fontWeight:500,textDecoration:"none",
+  color:"#94a3b8",fontSize:"14px",textDecoration:"none",
+  padding:"8px 14px",borderRadius:"8px",transition:"all 0.2s",
 };
 const navCTAStyle: React.CSSProperties = {
-  padding:"8px 18px",borderRadius:"8px",
   background:"linear-gradient(135deg,#6366f1,#8b5cf6)",
   color:"white",fontSize:"14px",fontWeight:600,textDecoration:"none",
-  boxShadow:"0 0 20px rgba(99,102,241,0.35)",
+  padding:"8px 18px",borderRadius:"8px",marginLeft:"8px",
 };
 
-/* Hero */
+/* Main / Hero */
 const mainStyle: React.CSSProperties = {
-  flex:1,display:"flex",alignItems:"center",justifyContent:"center",
-  padding:"80px 24px",position:"relative",overflow:"hidden",
+  minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",
+  padding:"100px 24px 60px",position:"relative",overflow:"hidden",
 };
 const orb1Style: React.CSSProperties = {
-  position:"absolute",width:"500px",height:"500px",borderRadius:"50%",
+  position:"absolute",top:"-10%",left:"-5%",
+  width:"500px",height:"500px",borderRadius:"50%",
   background:"radial-gradient(circle,rgba(99,102,241,0.18) 0%,transparent 70%)",
-  top:"-120px",left:"-120px",pointerEvents:"none",
-  animation:"pulse-glow 4s ease-in-out infinite",
+  filter:"blur(40px)",pointerEvents:"none",
 };
 const orb2Style: React.CSSProperties = {
-  position:"absolute",width:"400px",height:"400px",borderRadius:"50%",
-  background:"radial-gradient(circle,rgba(139,92,246,0.14) 0%,transparent 70%)",
-  bottom:"-80px",right:"-80px",pointerEvents:"none",
-  animation:"pulse-glow 5s ease-in-out infinite 1.5s",
+  position:"absolute",bottom:"-10%",right:"-5%",
+  width:"600px",height:"600px",borderRadius:"50%",
+  background:"radial-gradient(circle,rgba(139,92,246,0.15) 0%,transparent 70%)",
+  filter:"blur(50px)",pointerEvents:"none",
 };
 const orb3Style: React.CSSProperties = {
-  position:"absolute",width:"280px",height:"280px",borderRadius:"50%",
-  background:"radial-gradient(circle,rgba(6,182,212,0.1) 0%,transparent 70%)",
-  top:"35%",right:"15%",pointerEvents:"none",
+  position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",
+  width:"800px",height:"800px",borderRadius:"50%",
+  background:"radial-gradient(circle,rgba(99,102,241,0.05) 0%,transparent 60%)",
+  filter:"blur(60px)",pointerEvents:"none",
 };
 const introStyle: React.CSSProperties = {
-  maxWidth:"720px",textAlign:"center",position:"relative",zIndex:1,
-  display:"flex",flexDirection:"column",alignItems:"center",gap:"28px",
+  maxWidth:"680px",textAlign:"center",position:"relative",zIndex:1,
 };
 
-/* Badge pill */
+/* Badge */
 const badgePillStyle: React.CSSProperties = {
   display:"inline-flex",alignItems:"center",gap:"8px",
-  padding:"6px 16px",borderRadius:"100px",
-  background:"rgba(99,102,241,0.12)",border:"1px solid rgba(99,102,241,0.3)",
+  background:"rgba(99,102,241,0.12)",border:"1px solid rgba(99,102,241,0.25)",
+  borderRadius:"100px",padding:"6px 16px",marginBottom:"32px",
 };
 const badgeDotStyle: React.CSSProperties = {
-  width:"8px",height:"8px",borderRadius:"50%",
-  background:"#6366f1",boxShadow:"0 0 8px #6366f1",
+  width:"7px",height:"7px",borderRadius:"50%",
+  background:"#6366f1",boxShadow:"0 0 8px rgba(99,102,241,0.8)",
 };
-const badgeTextStyle: React.CSSProperties = {
-  fontSize:"13px",fontWeight:600,color:"#a5b4fc",letterSpacing:"0.5px",
-};
+const badgeTextStyle: React.CSSProperties = {fontSize:"13px",color:"#a5b4fc",fontWeight:500};
 
 /* Emblem */
-const emblemWrapStyle: React.CSSProperties = { animation:"float 3.5s ease-in-out infinite" };
+const emblemWrapStyle: React.CSSProperties = {display:"flex",justifyContent:"center",marginBottom:"28px"};
 const emblemStyle: React.CSSProperties = {
-  width:"90px",height:"90px",borderRadius:"24px",
-  background:"linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#06b6d4 100%)",
+  width:"96px",height:"96px",borderRadius:"28px",
+  background:"linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%)",
   display:"flex",alignItems:"center",justifyContent:"center",
-  boxShadow:"0 0 50px rgba(99,102,241,0.5),0 20px 40px rgba(0,0,0,0.4)",
+  boxShadow:"0 20px 60px rgba(99,102,241,0.4),0 0 0 1px rgba(99,102,241,0.3)",
 };
 
-/* Heading */
-const h1WrapStyle: React.CSSProperties = { display:"flex",flexDirection:"column",gap:"0px" };
+/* H1 */
+const h1WrapStyle: React.CSSProperties = {marginBottom:"20px"};
 const h1LineOneStyle: React.CSSProperties = {
-  fontSize:"clamp(40px,6vw,68px)",fontWeight:900,lineHeight:1.05,
-  background:"linear-gradient(135deg,#ffffff 0%,#e0e7ff 50%,#a5b4fc 100%)",
-  WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
-  letterSpacing:"-1.5px",margin:0,
+  fontSize:"clamp(36px,6vw,64px)",fontWeight:800,lineHeight:1.1,
+  color:"#f8fafc",letterSpacing:"-1.5px",margin:0,
 };
 const h1LineTwoStyle: React.CSSProperties = {
-  fontSize:"clamp(40px,6vw,68px)",fontWeight:900,lineHeight:1.05,
-  background:"linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#06b6d4 100%)",
-  WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
-  letterSpacing:"-1.5px",margin:0,
+  fontSize:"clamp(36px,6vw,64px)",fontWeight:800,lineHeight:1.1,
+  background:"linear-gradient(135deg,#6366f1,#a855f7,#ec4899)",
+  WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
+  backgroundClip:"text",letterSpacing:"-1.5px",margin:0,
 };
 
 /* Divider */
 const dividerRowStyle: React.CSSProperties = {
-  display:"flex",alignItems:"center",gap:"12px",width:"55%",
+  display:"flex",alignItems:"center",justifyContent:"center",gap:"12px",margin:"20px 0",
 };
 const dividerLineStyle: React.CSSProperties = {
-  flex:1,height:"1px",
+  width:"60px",height:"1px",
   background:"linear-gradient(90deg,transparent,rgba(99,102,241,0.5),transparent)",
 };
 const dividerDiamondStyle: React.CSSProperties = {
-  width:"8px",height:"8px",transform:"rotate(45deg)",flexShrink:0,
-  background:"linear-gradient(135deg,#6366f1,#8b5cf6)",
-  boxShadow:"0 0 10px rgba(99,102,241,0.7)",
+  width:"8px",height:"8px",
+  background:"linear-gradient(135deg,#6366f1,#a855f7)",
+  transform:"rotate(45deg)",borderRadius:"2px",
 };
 
+/* Paragraph */
 const pStyle: React.CSSProperties = {
-  fontSize:"clamp(15px,2vw,19px)",color:"rgba(255,255,255,0.6)",
-  lineHeight:1.8,maxWidth:"540px",
+  fontSize:"clamp(15px,2vw,18px)",color:"#94a3b8",lineHeight:1.7,
+  marginBottom:"40px",maxWidth:"560px",margin:"0 auto 40px",
 };
 
 /* Stats */
 const statsRowStyle: React.CSSProperties = {
-  display:"flex",alignItems:"center",gap:"24px",
-  padding:"18px 32px",borderRadius:"16px",
-  background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
-  backdropFilter:"blur(12px)",
+  display:"flex",alignItems:"center",justifyContent:"center",
+  gap:"0",marginBottom:"44px",
+  background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",
+  borderRadius:"16px",padding:"20px 32px",
 };
 const statItemStyle: React.CSSProperties = {
-  display:"flex",flexDirection:"column",alignItems:"center",gap:"4px",
+  display:"flex",flexDirection:"column",alignItems:"center",padding:"0 28px",
 };
 const statNumberStyle: React.CSSProperties = {
-  fontSize:"22px",fontWeight:800,
-  background:"linear-gradient(135deg,#6366f1,#8b5cf6)",
-  WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
+  fontSize:"24px",fontWeight:800,color:"#f1f5f9",letterSpacing:"-0.5px",
 };
-const statLabelStyle: React.CSSProperties = {
-  fontSize:"12px",color:"rgba(255,255,255,0.45)",fontWeight:500,
-};
-const statDivStyle: React.CSSProperties = {
-  width:"1px",height:"36px",background:"rgba(255,255,255,0.08)",
-};
+const statLabelStyle: React.CSSProperties = {fontSize:"12px",color:"#64748b",marginTop:"4px",fontWeight:500};
+const statDivStyle: React.CSSProperties = {width:"1px",height:"40px",background:"rgba(255,255,255,0.08)"};
 
-/* CTA buttons */
-const ctasStyle: React.CSSProperties = {
-  display:"flex",gap:"16px",flexWrap:"wrap",justifyContent:"center",
-};
+/* CTAs */
+const ctasStyle: React.CSSProperties = {display:"flex",gap:"14px",justifyContent:"center",flexWrap:"wrap"};
 const primaryBtnStyle: React.CSSProperties = {
   display:"inline-flex",alignItems:"center",gap:"8px",
-  padding:"14px 28px",borderRadius:"12px",textDecoration:"none",
   background:"linear-gradient(135deg,#6366f1,#8b5cf6)",
-  color:"white",fontSize:"16px",fontWeight:600,
-  boxShadow:"0 8px 32px rgba(99,102,241,0.4)",
+  color:"white",textDecoration:"none",fontWeight:600,fontSize:"15px",
+  padding:"14px 28px",borderRadius:"12px",
+  boxShadow:"0 8px 30px rgba(99,102,241,0.35)",
 };
 const secondaryBtnStyle: React.CSSProperties = {
   display:"inline-flex",alignItems:"center",gap:"8px",
-  padding:"14px 28px",borderRadius:"12px",textDecoration:"none",
-  background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",
-  color:"white",fontSize:"16px",fontWeight:600,
+  background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.12)",
+  color:"#e2e8f0",textDecoration:"none",fontWeight:600,fontSize:"15px",
+  padding:"14px 28px",borderRadius:"12px",
 };
 
-/* ── Footer styles ──────────────────────────────────────────────────────── */
-
+/* Footer */
 const footerStyle: React.CSSProperties = {
-  background:"linear-gradient(180deg,#090d1a 0%,#060810 100%)",
-  color:"#cbd5e1",
+  background:"#090d1a",borderTop:"1px solid rgba(255,255,255,0.06)",
 };
 const footerContainerStyle: React.CSSProperties = {
-  maxWidth:"1200px",margin:"0 auto",padding:"48px 24px 0",
+  maxWidth:"1200px",margin:"0 auto",padding:"60px 24px 30px",
 };
 const footerGridStyle: React.CSSProperties = {
   display:"grid",
   gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",
-  gap:"40px",paddingBottom:"48px",
+  gap:"48px",marginBottom:"48px",
 };
-const footerBrandColStyle: React.CSSProperties = {
-  display:"flex",flexDirection:"column",gap:"20px",
-};
-const footerLogoRowStyle: React.CSSProperties = {
-  display:"flex",alignItems:"center",gap:"14px",
-};
+const footerBrandColStyle: React.CSSProperties = {maxWidth:"320px"};
+const footerLogoRowStyle: React.CSSProperties = {display:"flex",alignItems:"center",gap:"14px",marginBottom:"20px"};
 const footerLogoBoxStyle: React.CSSProperties = {
-  width:"52px",height:"52px",borderRadius:"14px",flexShrink:0,
+  width:"48px",height:"48px",borderRadius:"14px",flexShrink:0,
   background:"linear-gradient(135deg,#6366f1,#8b5cf6)",
   display:"flex",alignItems:"center",justifyContent:"center",
-  boxShadow:"0 0 24px rgba(99,102,241,0.4)",
 };
 const ftrH3Style: React.CSSProperties = {
-  fontSize:"16px",fontWeight:700,color:"white",lineHeight:1.3,
+  fontSize:"16px",fontWeight:700,color:"#f1f5f9",margin:0,marginBottom:"4px",
 };
-const ftrTagStyle: React.CSSProperties = {
-  fontSize:"12px",color:"#6366f1",fontWeight:600,marginTop:"3px",
-  textTransform:"uppercase" as const,letterSpacing:"0.5px",
-};
+const ftrTagStyle: React.CSSProperties = {fontSize:"12px",color:"#6366f1",margin:0,fontWeight:500};
 const missionBoxStyle: React.CSSProperties = {
-  padding:"14px 16px",borderRadius:"12px",
-  background:"rgba(99,102,241,0.07)",borderLeft:"3px solid #6366f1",
+  background:"rgba(99,102,241,0.07)",border:"1px solid rgba(99,102,241,0.15)",
+  borderRadius:"12px",padding:"16px",marginBottom:"20px",
 };
 const missionTextStyle: React.CSSProperties = {
-  fontSize:"13px",color:"#94a3b8",lineHeight:1.7,fontStyle:"italic",
+  fontSize:"13px",color:"#64748b",lineHeight:"1.7",fontStyle:"italic",margin:0,
 };
-const socialRowStyle: React.CSSProperties = { display:"flex",gap:"10px" };
-
+const socialRowStyle: React.CSSProperties = {display:"flex",gap:"10px",flexWrap:"wrap"};
 const ftrSectionTitleStyle: React.CSSProperties = {
-  fontSize:"14px",fontWeight:700,color:"white",
-  marginBottom:"20px",paddingBottom:"10px",
-  borderBottom:"1px solid rgba(99,102,241,0.25)",
-  textTransform:"uppercase" as const,letterSpacing:"0.5px",
+  fontSize:"13px",fontWeight:700,color:"#f1f5f9",
+  textTransform:"uppercase",letterSpacing:"1px",marginBottom:"20px",
 };
 const ftrLinkStyle: React.CSSProperties = {
-  color:"#94a3b8",textDecoration:"none",fontSize:"14px",
-  display:"flex",alignItems:"center",gap:"8px",
+  color:"#64748b",fontSize:"14px",textDecoration:"none",display:"block",
+  transition:"color 0.2s",
 };
 const footerBottomStyle: React.CSSProperties = {
-  borderTop:"1px solid rgba(255,255,255,0.05)",
-  padding:"20px 0 28px",
-};
-const footerBottomInnerStyle: React.CSSProperties = {
-  display:"flex",flexWrap:"wrap" as const,gap:"16px",
-  justifyContent:"space-between",alignItems:"center",
+  borderTop:"1px solid rgba(255,255,255,0.06)",paddingTop:"24px",
+  display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"12px",
 };
