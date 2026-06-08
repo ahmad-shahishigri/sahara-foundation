@@ -62,6 +62,10 @@ export default function Home() {
             Track donations, manage loans, and monitor expenses — all in one place.
           </p>
 
+          <p style={pStyle}>
+            For query call this number: <a href="tel:5525855" style={{color:"#a5b4fc",fontWeight:600,textDecoration:"none"}}>5525855</a>
+          </p>
+
           {/* Impact stats */}
           <div style={statsRowStyle}>
             <div style={statItemStyle}>
