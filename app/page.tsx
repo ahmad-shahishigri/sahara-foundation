@@ -15,7 +15,7 @@ export default function Home() {
           </div>
           <div style={navLinksStyle}>
             <a href="/dashboard" style={navLinkStyle}>Dashboard</a>
-            <a href="#" style={navLinkStyle}>About</a>
+            <a href="#about" style={navLinkStyle}>About</a>
             <a href="#" style={navLinkStyle}>Donate</a>
             <a href="/dashboard" style={navCTAStyle}>Get Started →</a>
           </div>
@@ -96,6 +96,27 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* ── About Section ────────────────────────────────────────────────── */}
+      <section id="about" style={aboutStyle}>
+        <div style={aboutContainerStyle}>
+          <h2 style={aboutTitleStyle}>About Us</h2>
+          <div style={aboutCardStyle}>
+            <div style={aboutRowStyle}>
+              <span style={aboutLabelStyle}>🕐 Timing</span>
+              <span style={aboutValueStyle}>12:00 PM to 4:00 PM</span>
+            </div>
+            <div style={aboutRowStyle}>
+              <span style={aboutLabelStyle}>👤 Representative</span>
+              <span style={aboutValueStyle}>Shahi Balti</span>
+            </div>
+            <div style={aboutRowStyle}>
+              <span style={aboutLabelStyle}>📞 Call</span>
+              <a href="tel:03105256692" style={aboutValueLinkStyle}>03105256692</a>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* ── Footer ───────────────────────────────────────────────────────── */}
       <footer style={footerStyle}>
@@ -425,6 +446,39 @@ const secondaryBtnStyle: React.CSSProperties = {
   padding:"14px 28px",borderRadius:"12px",textDecoration:"none",
   background:"rgba(255,255,255,0.06)",border:"1px solid rgba(255,255,255,0.15)",
   color:"white",fontSize:"16px",fontWeight:600,
+};
+
+/* ── About styles ───────────────────────────────────────────────────────── */
+
+const aboutStyle: React.CSSProperties = {
+  padding:"64px 24px",position:"relative",
+};
+const aboutContainerStyle: React.CSSProperties = {
+  maxWidth:"720px",margin:"0 auto",textAlign:"center",
+};
+const aboutTitleStyle: React.CSSProperties = {
+  fontSize:"clamp(28px,4vw,40px)",fontWeight:800,marginBottom:"28px",
+  background:"linear-gradient(135deg,#ffffff 0%,#a5b4fc 100%)",
+  WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",backgroundClip:"text",
+};
+const aboutCardStyle: React.CSSProperties = {
+  display:"flex",flexDirection:"column",gap:"16px",
+  padding:"28px 32px",borderRadius:"16px",textAlign:"left",
+  background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",
+  backdropFilter:"blur(12px)",
+};
+const aboutRowStyle: React.CSSProperties = {
+  display:"flex",alignItems:"center",justifyContent:"space-between",
+  gap:"16px",flexWrap:"wrap",
+};
+const aboutLabelStyle: React.CSSProperties = {
+  fontSize:"14px",fontWeight:600,color:"#a5b4fc",
+};
+const aboutValueStyle: React.CSSProperties = {
+  fontSize:"15px",fontWeight:500,color:"rgba(255,255,255,0.85)",
+};
+const aboutValueLinkStyle: React.CSSProperties = {
+  fontSize:"15px",fontWeight:600,color:"#818cf8",textDecoration:"none",
 };
 
 /* ── Footer styles ──────────────────────────────────────────────────────── */
